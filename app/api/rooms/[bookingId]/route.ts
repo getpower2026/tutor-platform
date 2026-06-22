@@ -4,11 +4,12 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createDailyRoom, createDailyToken } from "@/lib/daily";
 
-export async function GET(_: Request, { params }: { params: { bookingId: string } }) {
+export async function GET(_: Request, { params }: { params: Promise<{ bookingId: string }> }) {
+  const { bookingId } = await params;
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-  const booking = await prisma.booking.findUnique({ where: { id: params.bookingId } });
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
   if (!booking) return NextResponse.json({ message: "找不到預約" }, { status: 404 });
 
   const isParticipant = booking.studentId === session.user.id || booking.teacherId === session.user.id;
