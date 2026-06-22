@@ -131,7 +131,7 @@ export default function HomePage() {
       </section>
 
       <footer className="bg-gray-900 text-gray-400 py-8 text-center text-sm">
-        © 2024 TutorLink. 保留所有權利。
+        © 2026 TutorLink. 保留所有權利。
       </footer>
     </div>
   );
