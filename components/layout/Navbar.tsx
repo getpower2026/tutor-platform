@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
@@ -13,7 +13,7 @@ export function Navbar() {
         <div className="flex justify-between h-16 items-center">
           <Link href="/" className="flex items-center gap-2 font-bold text-xl text-primary-600">
             <BookOpen className="w-6 h-6" />
-            給力一對一線上家教
+            TutorLink
           </Link>
 
           <div className="flex items-center gap-6">

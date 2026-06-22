@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
@@ -50,7 +50,7 @@ function RegisterForm() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 font-bold text-2xl text-primary-600">
             <BookOpen className="w-7 h-7" />
-            給力一對一線上家教
+            TutorLink
           </Link>
           <h1 className="text-2xl font-bold mt-4">建立帳號</h1>
         </div>

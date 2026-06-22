@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -33,7 +33,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 font-bold text-2xl text-primary-600">
             <BookOpen className="w-7 h-7" />
-            給力一對一線上家教
+            TutorLink
           </Link>
           <h1 className="text-2xl font-bold mt-4">歡迎回來</h1>
           <p className="text-gray-500 mt-1">登入你的帳號</p>
