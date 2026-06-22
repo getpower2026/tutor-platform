@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  REFUNDED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String?
+  image         String?
+  role          Role      @default(STUDENT)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  teacherProfile TeacherProfile?
+  bookingsAsStudent Booking[] @relation("StudentBookings")
+  bookingsAsTeacher Booking[] @relation("TeacherBookings")
+  reviewsGiven  Review[]  @relation("ReviewsGiven")
+  reviewsReceived Review[] @relation("ReviewsReceived")
+}
+
+model TeacherProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio         String
+  subjects    String[]
+  hourlyRate  Int      // in NTD
+  experience  Int      // years
+  education   String
+  languages   String[]
+  rating      Float    @default(0)
+  reviewCount Int      @default(0)
+  isVerified  Boolean  @default(false)
+  availability Json    // { monday: [{start: "09:00", end: "12:00"}], ... }
+  stripeAccountId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Booking {
+  id          String        @id @default(cuid())
+  studentId   String
+  student     User          @relation("StudentBookings", fields: [studentId], references: [id])
+  teacherId   String
+  teacher     User          @relation("TeacherBookings", fields: [teacherId], references: [id])
+  startTime   DateTime
+  endTime     DateTime
+  status      BookingStatus @default(PENDING)
+  paymentStatus PaymentStatus @default(UNPAID)
+  totalAmount Int           // in NTD
+  platformFee Int           // platform commission
+  stripePaymentIntentId String?
+  dailyRoomName String?
+  dailyRoomUrl  String?
+  note        String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  review      Review?
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  bookingId  String   @unique
+  booking    Booking  @relation(fields: [bookingId], references: [id])
+  reviewerId String
+  reviewer   User     @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  teacherId  String
+  teacher    User     @relation("ReviewsReceived", fields: [teacherId], references: [id])
+  rating     Int      // 1-5
+  comment    String
+  createdAt  DateTime @default(now())
+}

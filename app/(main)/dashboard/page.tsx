@@ -1,0 +1,147 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Navbar } from "@/components/layout/Navbar";
+import { Calendar, Video, Clock, CheckCircle, XCircle, AlertCircle, User } from "lucide-react";
+import { formatDateTime, formatNTD } from "@/lib/utils";
+
+const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
+  PENDING:   { label: "待確認", color: "text-amber-600 bg-amber-50",  icon: AlertCircle },
+  CONFIRMED: { label: "已確認", color: "text-blue-600 bg-blue-50",    icon: CheckCircle },
+  COMPLETED: { label: "已完成", color: "text-green-600 bg-green-50",  icon: CheckCircle },
+  CANCELLED: { label: "已取消", color: "text-gray-500 bg-gray-50",    icon: XCircle },
+};
+
+export default function DashboardPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (status === "unauthenticated") router.push("/login");
+  }, [status, router]);
+
+  useEffect(() => {
+    if (session) {
+      fetch("/api/bookings").then((r) => r.json()).then((d) => {
+        setBookings(Array.isArray(d) ? d : []);
+        setLoading(false);
+      });
+    }
+  }, [session]);
+
+  if (status === "loading" || !session) return null;
+
+  const isTeacher = session.user.role === "TEACHER";
+  const upcoming = bookings.filter((b) => b.status === "CONFIRMED" && new Date(b.startTime) > new Date());
+  const past = bookings.filter((b) => b.status === "COMPLETED");
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold">你好，{session.user.name} 👋</h1>
+            <p className="text-gray-500 mt-1">{isTeacher ? "老師控制台" : "學生控制台"}</p>
+          </div>
+          <div className="flex gap-3">
+            {isTeacher && (
+              <Link href="/dashboard/profile" className="btn-secondary flex items-center gap-1">
+                <User className="w-4 h-4" />
+                編輯個人檔案
+              </Link>
+            )}
+            {!isTeacher && (
+              <Link href="/teachers" className="btn-primary">尋找老師</Link>
+            )}
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          {[
+            { label: "即將上課", value: upcoming.length, icon: Calendar, color: "text-blue-600 bg-blue-50" },
+            { label: "已完成課程", value: past.length, icon: CheckCircle, color: "text-green-600 bg-green-50" },
+            { label: "總課程數", value: bookings.length, icon: Clock, color: "text-purple-600 bg-purple-50" },
+          ].map(({ label, value, icon: Icon, color }) => (
+            <div key={label} className="card p-4 flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color}`}>
+                <Icon className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold">{value}</div>
+                <div className="text-sm text-gray-500">{label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Bookings */}
+        <div className="card">
+          <div className="px-6 py-4 border-b border-gray-100">
+            <h2 className="font-bold text-lg">所有預約</h2>
+          </div>
+          {loading ? (
+            <div className="p-8 text-center text-gray-400">載入中...</div>
+          ) : bookings.length === 0 ? (
+            <div className="p-12 text-center text-gray-400">
+              <Calendar className="w-12 h-12 mx-auto mb-3" />
+              <p>還沒有任何預約</p>
+              {!isTeacher && (
+                <Link href="/teachers" className="btn-primary inline-flex mt-4">立即尋找老師</Link>
+              )}
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {bookings.map((booking) => {
+                const st = STATUS_MAP[booking.status] ?? STATUS_MAP.PENDING;
+                const Icon = st.icon;
+                const isPaid = booking.paymentStatus === "PAID";
+                const canJoin = booking.status === "CONFIRMED" && isPaid;
+                const otherPerson = isTeacher ? booking.student : booking.teacher;
+
+                return (
+                  <div key={booking.id} className="px-6 py-4 flex items-center gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium">{otherPerson?.name}</span>
+                        <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${st.color}`}>
+                          <Icon className="w-3 h-3" />
+                          {st.label}
+                        </span>
+                        {!isPaid && booking.status !== "CANCELLED" && (
+                          <span className="text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded-full">待付款</span>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-500 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {formatDateTime(booking.startTime)}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium text-gray-900">{formatNTD(booking.totalAmount)}</div>
+                      {canJoin && (
+                        <Link
+                          href={`/room/${booking.id}`}
+                          className="inline-flex items-center gap-1 text-sm text-primary-600 font-medium hover:underline mt-1"
+                        >
+                          <Video className="w-3 h-3" />
+                          進入教室
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
