@@ -95,7 +95,7 @@ export default function HomePage() {
       <section className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-4">創辦人介紹｜汪主任</h2>
-          <p className="text-gray-500 text-center mb-12">14年一對一補教經驗，用心媒合每一位學生與老師</p>
+          <p className="text-red-600 text-center mb-12">14年一對一補教經驗，用心媒合每一位學生與老師</p>
 
           <div className="grid md:grid-cols-2 gap-12 items-center mb-12">
             {/* Left: text */}
