@@ -6,7 +6,7 @@ import { Providers } from "@/components/layout/Providers";
 const noto = Noto_Sans_TC({ subsets: ["latin"], variable: "--font-noto" });
 
 export const metadata: Metadata = {
-  title: "TutorLink - 專業一對一家教平台",
+  title: "給力一對一線上家教",
   description: "找到最適合你的老師，在家就能學習",
 };
 

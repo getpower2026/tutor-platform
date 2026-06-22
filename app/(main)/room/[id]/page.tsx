@@ -66,7 +66,7 @@ export default function RoomPage() {
     <div className="min-h-screen bg-gray-900 flex flex-col">
       {/* Header */}
       <div className="bg-gray-800 px-6 py-3 flex items-center justify-between">
-        <span className="text-white font-medium">TutorLink 視訊教室</span>
+        <span className="text-white font-medium">給力一對一線上家教 視訊教室</span>
         {status === "loading" && (
           <div className="flex items-center gap-2 text-gray-300 text-sm">
             <Loader2 className="w-4 h-4 animate-spin" />

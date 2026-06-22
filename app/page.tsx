@@ -14,7 +14,7 @@ export default function HomePage() {
             在家就能學習<br />找到最適合你的老師
           </h1>
           <p className="text-xl text-primary-100 mb-10 max-w-2xl mx-auto">
-            TutorLink 連結專業老師與求知學生，透過安全的視訊系統，隨時隨地一對一上課。
+            給力一對一線上家教 連結專業老師與求知學生，透過安全的視訊系統，隨時隨地一對一上課。
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/teachers" className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-primary-700 font-semibold rounded-xl hover:bg-primary-50 transition-colors text-lg">
@@ -72,7 +72,7 @@ export default function HomePage() {
       {/* Trust */}
       <section className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">為什麼選擇 TutorLink</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">為什麼選擇 給力一對一線上家教</h2>
           <div className="grid md:grid-cols-3 gap-8">
             {[
               { icon: ShieldCheck, title: "安全付款保障", desc: "透過 Stripe 國際支付，所有交易加密保護，課程完成後才撥款給老師" },
@@ -101,7 +101,7 @@ export default function HomePage() {
       </section>
 
       <footer className="bg-gray-900 text-gray-400 py-8 text-center text-sm">
-        © 2024 TutorLink. 保留所有權利。
+        © 2024 給力一對一線上家教. 保留所有權利。
       </footer>
     </div>
   );
