@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import Stripe from "stripe";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 
@@ -14,8 +15,9 @@ export async function POST(req: Request) {
   }
 
   if (event.type === "payment_intent.succeeded") {
-    const pi = event.data.object as { metadata: { bookingId: string } };
-    const bookingId = pi.metadata.bookingId;
+    const pi = event.data.object as Stripe.PaymentIntent;
+    const bookingId = pi.metadata?.bookingId;
+    if (!bookingId) return NextResponse.json({ received: true });
 
     await prisma.booking.update({
       where: { id: bookingId },
