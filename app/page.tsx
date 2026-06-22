@@ -111,11 +111,8 @@ export default function HomePage() {
               </div>
             </div>
             {/* Right: news + store */}
-            <div className="grid grid-cols-2 gap-4">
-              <img src="/founder-news.png" alt="汪主任接受媒體採訪" className="rounded-xl object-cover w-full h-48 shadow-md" />
-              <img src="/founder-store.jpg" alt="給力一對一實體教室外觀" className="rounded-xl object-cover w-full h-48 shadow-md" />
-              <img src="/founder-class1.jpg" alt="教室環境1" className="rounded-xl object-cover w-full h-48 shadow-md" />
-              <img src="/founder-class2.jpg" alt="教室環境2" className="rounded-xl object-cover w-full h-48 shadow-md" />
+            <div className="grid grid-cols-1 gap-4">
+              <img src="/founder-news.png" alt="汪主任接受媒體採訪" className="rounded-xl object-cover w-full h-72 shadow-md" />
             </div>
           </div>
         </div>
