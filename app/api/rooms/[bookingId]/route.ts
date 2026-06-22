@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createDailyRoom, createDailyToken } from "@/lib/daily";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(_: Request, { params }: { params: Promise<{ bookingId: string }> }) {
   const { bookingId } = await params;
   const session = await getServerSession(authOptions);
