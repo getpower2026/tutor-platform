@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { createPaymentIntent } from "@/lib/stripe";
 import { PLATFORM_FEE_PERCENT } from "@/lib/stripe";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
