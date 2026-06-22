@@ -91,6 +91,36 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Founder */}
+      <section className="py-20 px-4 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-4">創辦人介紹｜汪主任</h2>
+          <p className="text-gray-500 text-center mb-12">14年一對一補教經驗，用心媒合每一位學生與老師</p>
+
+          <div className="grid md:grid-cols-2 gap-12 items-center mb-12">
+            {/* Left: text */}
+            <div className="space-y-4 text-gray-600 leading-relaxed">
+              <p>您好，我是汪主任。</p>
+              <p>從事一對一補教事業超過<strong>14年</strong>，長期專注於學生與老師的媒合服務，累積豐富的教學管理與學習輔導經驗。多年來，已成功協助無數學生找到適合的老師，也幫助許多老師發揮專業，創造雙贏的教學成果。</p>
+              <p>在經營實體一對一補習班的過程中，我深刻了解每位學生的學習需求都不同，因此始終堅持「<strong>因材施教、精準媒合</strong>」的理念，讓學生能夠找到最適合自己的老師，提升學習效率與成績表現。</p>
+              <p>如今，我將14年的實體教學經驗延伸至線上平台，希望透過科技與專業服務，打破地域限制，讓更多學生都能享有優質的一對一教學資源。</p>
+              <p>無論您是想提升學業成績、準備升學考試，或是培養專業技能，我們都將用最認真的態度，協助您找到最適合的老師，開啟更有效率的學習之路。</p>
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <p className="font-bold text-gray-800">汪主任</p>
+                <p className="text-sm text-gray-500">平台創辦人 ｜ 14年一對一補教經驗</p>
+              </div>
+            </div>
+            {/* Right: news + store */}
+            <div className="grid grid-cols-2 gap-4">
+              <img src="/founder-news.png" alt="汪主任接受媒體採訪" className="rounded-xl object-cover w-full h-48 shadow-md" />
+              <img src="/founder-store.jpg" alt="給力一對一實體教室外觀" className="rounded-xl object-cover w-full h-48 shadow-md" />
+              <img src="/founder-class1.jpg" alt="教室環境1" className="rounded-xl object-cover w-full h-48 shadow-md" />
+              <img src="/founder-class2.jpg" alt="教室環境2" className="rounded-xl object-cover w-full h-48 shadow-md" />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="py-20 px-4 bg-primary-600 text-white text-center">
         <h2 className="text-3xl font-bold mb-4">準備好開始了嗎？</h2>
