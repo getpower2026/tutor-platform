@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Loader2, PhoneOff, Video, PenLine, Eraser, Trash2 } from "lucide-react";
-
-const COLORS = ["#000000", "#ef4444", "#3b82f6", "#22c55e", "#f59e0b", "#8b5cf6", "#ffffff"];
+import { Loader2, PhoneOff, Video, PenLine } from "lucide-react";
 
 export default function RoomPage() {
   const { id } = useParams<{ id: string }>();
@@ -18,20 +16,6 @@ export default function RoomPage() {
   const [completing, setCompleting] = useState(false);
   const isTeacher = session?.user?.role === "TEACHER";
 
-  // Canvas state
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const isDrawing = useRef(false);
-  const lastPos = useRef<{ x: number; y: number } | null>(null);
-  const [color, setColor] = useState("#000000");
-  const [brushSize, setBrushSize] = useState(3);
-  const [tool, setTool] = useState<"pen" | "eraser">("pen");
-
-  // Pusher client events (peer-to-peer, no server roundtrip)
-  const channelRef = useRef<any>(null);
-  const mySocketIdRef = useRef<string>("");
-  const bufferRef = useRef<{ x: number; y: number; lx: number; ly: number; c: string; s: number; e: boolean }[]>([]);
-  const flushRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
   useEffect(() => {
     if (!session) return;
     fetch(`/api/rooms/${id}`)
@@ -41,145 +25,6 @@ export default function RoomPage() {
         setRoomUrl(`https://${process.env.NEXT_PUBLIC_DAILY_DOMAIN}/${d.roomName}?t=${d.token}`);
       });
   }, [id, session]);
-
-  // Pusher private channel (client events = peer-to-peer, no Vercel cold start)
-  useEffect(() => {
-    if (!session) return;
-    import("pusher-js").then(({ default: Pusher }) => {
-      const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
-        cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
-        authEndpoint: "/api/pusher/auth",
-      });
-      pusher.connection.bind("connected", () => {
-        mySocketIdRef.current = pusher.connection.socket_id;
-      });
-      const ch = pusher.subscribe(`private-whiteboard-${id}`);
-      channelRef.current = ch;
-
-      // Receive strokes from the other side
-      ch.bind("client-strokes", (data: any) => {
-        const canvas = canvasRef.current;
-        if (!canvas || !data.pts) return;
-        const ctx = canvas.getContext("2d")!;
-        data.pts.forEach((pt: any) => {
-          ctx.beginPath();
-          ctx.globalCompositeOperation = pt.e ? "destination-out" : "source-over";
-          ctx.strokeStyle = pt.c;
-          ctx.lineWidth = pt.s;
-          ctx.lineCap = "round";
-          ctx.lineJoin = "round";
-          ctx.moveTo(pt.lx * canvas.width, pt.ly * canvas.height);
-          ctx.lineTo(pt.x * canvas.width, pt.y * canvas.height);
-          ctx.stroke();
-        });
-        ctx.globalCompositeOperation = "source-over";
-      });
-
-      // Receive clear command
-      ch.bind("client-clear", () => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext("2d")!;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      });
-
-      // Flush buffer every 80ms
-      flushRef.current = setInterval(() => {
-        if (!bufferRef.current.length || !channelRef.current) return;
-        try {
-          channelRef.current.trigger("client-strokes", { pts: bufferRef.current });
-        } catch {}
-        bufferRef.current = [];
-      }, 80);
-
-      return () => {
-        pusher.unsubscribe(`private-whiteboard-${id}`);
-        pusher.disconnect();
-        if (flushRef.current) clearInterval(flushRef.current);
-      };
-    });
-  }, [id, session]);
-
-  // Init canvas
-  const initCanvas = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const container = canvas.parentElement!;
-    const w = container.clientWidth;
-    const h = container.clientHeight;
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, w, h);
-  }, []);
-
-  useEffect(() => {
-    if (tab === "whiteboard") {
-      setTimeout(initCanvas, 50);
-    }
-  }, [tab, initCanvas]);
-
-  // Drawing helpers
-  const getPos = (e: React.MouseEvent | React.TouchEvent) => {
-    const canvas = canvasRef.current!;
-    const rect = canvas.getBoundingClientRect();
-    const src = "touches" in e ? e.touches[0] : e;
-    return {
-      x: (src.clientX - rect.left) / rect.width,
-      y: (src.clientY - rect.top) / rect.height,
-    };
-  };
-
-  const drawSegment = (lx: number, ly: number, x: number, y: number, isEraser: boolean, c: string, s: number) => {
-    const canvas = canvasRef.current!;
-    const ctx = canvas.getContext("2d")!;
-    ctx.beginPath();
-    ctx.globalCompositeOperation = isEraser ? "destination-out" : "source-over";
-    ctx.strokeStyle = c;
-    ctx.lineWidth = s;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.moveTo(lx * canvas.width, ly * canvas.height);
-    ctx.lineTo(x * canvas.width, y * canvas.height);
-    ctx.stroke();
-    ctx.globalCompositeOperation = "source-over";
-    // Buffer for Pusher send
-    bufferRef.current.push({ x, y, lx, ly, c, s, e: isEraser });
-  };
-
-  const startDraw = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    isDrawing.current = true;
-    lastPos.current = getPos(e);
-  };
-
-  const draw = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    if (!isDrawing.current || !lastPos.current) return;
-    const pos = getPos(e);
-    const isEraser = tool === "eraser";
-    drawSegment(lastPos.current.x, lastPos.current.y, pos.x, pos.y, isEraser, isEraser ? "#000000" : color, isEraser ? 20 : brushSize);
-    lastPos.current = pos;
-  };
-
-  const endDraw = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    isDrawing.current = false;
-    lastPos.current = null;
-  };
-
-  const clearCanvas = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d")!;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    try { channelRef.current?.trigger("client-clear", {}); } catch {}
-  };
 
   const handleComplete = async () => {
     setCompleting(true);
@@ -203,8 +48,9 @@ export default function RoomPage() {
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#111", overflow: "hidden" }}>
       {/* Header */}
-      <div style={{ background: "#1f2937", padding: "6px 12px", display: "flex", alignItems: "center", gap: "8px", flexShrink: 0, flexWrap: "wrap" }}>
+      <div style={{ background: "#1f2937", padding: "6px 12px", display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
         <span style={{ color: "white", fontWeight: "bold", fontSize: "14px" }}>TutorLink 視訊教室</span>
+
         {!roomUrl && (
           <span style={{ color: "#9ca3af", fontSize: "12px", display: "flex", alignItems: "center", gap: "4px" }}>
             <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />連線中...
@@ -212,68 +58,50 @@ export default function RoomPage() {
         )}
 
         {/* Tabs */}
-        <div style={{ display: "flex", gap: "4px", marginLeft: "4px" }}>
-          <button onClick={() => setTab("video")}
-            style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 12px", background: tab === "video" ? "#3b82f6" : "#374151", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>
+        <div style={{ display: "flex", gap: "4px", marginLeft: "8px" }}>
+          <button
+            onClick={() => setTab("video")}
+            style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 12px", background: tab === "video" ? "#3b82f6" : "#374151", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
+          >
             <Video style={{ width: 14, height: 14 }} /> 視訊
           </button>
-          <button onClick={() => setTab("whiteboard")}
-            style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 12px", background: tab === "whiteboard" ? "#7c3aed" : "#374151", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>
+          <button
+            onClick={() => setTab("whiteboard")}
+            style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 12px", background: tab === "whiteboard" ? "#7c3aed" : "#374151", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
+          >
             <PenLine style={{ width: 14, height: 14 }} /> 白板
           </button>
         </div>
 
-        {/* Whiteboard tools (only visible on whiteboard tab) */}
-        {tab === "whiteboard" && (
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-            {COLORS.map((c) => (
-              <button key={c} onClick={() => { setColor(c); setTool("pen"); }}
-                style={{ width: 22, height: 22, borderRadius: "50%", background: c, border: color === c && tool === "pen" ? "3px solid #60a5fa" : "2px solid #6b7280", cursor: "pointer", flexShrink: 0 }} />
-            ))}
-            <select value={brushSize} onChange={(e) => setBrushSize(Number(e.target.value))}
-              style={{ background: "#374151", color: "white", border: "none", borderRadius: "4px", padding: "2px 4px", fontSize: "12px" }}>
-              {[2, 4, 8, 16].map((s) => <option key={s} value={s}>{s}px</option>)}
-            </select>
-            <button onClick={() => setTool("eraser")}
-              style={{ display: "flex", alignItems: "center", gap: "3px", padding: "4px 8px", background: tool === "eraser" ? "#f59e0b" : "#374151", color: "white", border: "none", borderRadius: "5px", cursor: "pointer", fontSize: "12px" }}>
-              <Eraser style={{ width: 13, height: 13 }} /> 橡皮擦
-            </button>
-            <button onClick={clearCanvas}
-              style={{ display: "flex", alignItems: "center", gap: "3px", padding: "4px 8px", background: "#374151", color: "#f87171", border: "none", borderRadius: "5px", cursor: "pointer", fontSize: "12px" }}>
-              <Trash2 style={{ width: 13, height: 13 }} /> 清除
-            </button>
-          </div>
-        )}
-
-        <button onClick={() => setLeaveModal(true)}
-          style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "4px", padding: "5px 10px", background: "#ef4444", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>
+        <button
+          onClick={() => setLeaveModal(true)}
+          style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "4px", padding: "5px 10px", background: "#ef4444", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
+        >
           <PhoneOff style={{ width: 14, height: 14 }} /> 離開
         </button>
       </div>
 
-      {/* Content */}
+      {/* Content — both always mounted */}
       <div style={{ flex: 1, minHeight: 0, position: "relative" }}>
         {/* Video */}
         <div style={{ position: "absolute", inset: 0, display: tab === "video" ? "block" : "none" }}>
           {roomUrl && (
-            <iframe src={roomUrl} allow="camera; microphone; fullscreen; speaker; display-capture; autoplay"
-              style={{ width: "100%", height: "100%", border: "none" }} />
+            <iframe
+              src={roomUrl}
+              allow="camera; microphone; fullscreen; speaker; display-capture; autoplay"
+              style={{ width: "100%", height: "100%", border: "none" }}
+            />
           )}
         </div>
 
-        {/* Whiteboard canvas */}
-        <div style={{ position: "absolute", inset: 0, display: tab === "whiteboard" ? "block" : "none", background: "#fff" }}>
-          <canvas
-            ref={canvasRef}
-            style={{ display: "block", cursor: tool === "eraser" ? "cell" : "crosshair", touchAction: "none", width: "100%", height: "100%" }}
-            onMouseDown={startDraw}
-            onMouseMove={draw}
-            onMouseUp={endDraw}
-            onMouseLeave={endDraw}
-            onTouchStart={startDraw}
-            onTouchMove={draw}
-            onTouchEnd={endDraw}
-          />
+        {/* Whiteboard — same-origin iframe, no Tailwind conflict, Excalidraw + Pusher sync */}
+        <div style={{ position: "absolute", inset: 0, display: tab === "whiteboard" ? "block" : "none" }}>
+          {session && (
+            <iframe
+              src={`/wb/${id}`}
+              style={{ width: "100%", height: "100%", border: "none" }}
+            />
+          )}
         </div>
       </div>
 
