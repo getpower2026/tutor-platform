@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Loader2, PhoneOff, Video, PenLine } from "lucide-react";
+import Pusher from "pusher-js";
 
 const COLORS = ["#000000", "#ef4444", "#3b82f6", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#ffffff"];
 const SIZES = [2, 5, 10, 20];
@@ -22,14 +23,19 @@ export default function RoomPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   const lastPos = useRef<{ x: number; y: number } | null>(null);
-  const lastDrawTime = useRef(0);
-  const lastSeenTs = useRef(0);
-  const uploading = useRef(false);
-  const forceDownload = useRef(false);
+  const pendingPoints = useRef<{ px: number; py: number; x: number; y: number }[]>([]);
 
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
   const [wbTool, setWbTool] = useState<"pen" | "eraser">("pen");
+
+  // 用 ref 讓計時器拿到最新的 color/size/wbTool
+  const colorRef = useRef(color);
+  const sizeRef = useRef(size);
+  const toolRef = useRef(wbTool);
+  useEffect(() => { colorRef.current = color; }, [color]);
+  useEffect(() => { sizeRef.current = size; }, [size]);
+  useEffect(() => { toolRef.current = wbTool; }, [wbTool]);
 
   useEffect(() => {
     if (!session) return;
@@ -56,56 +62,97 @@ export default function RoomPage() {
     ctx.fillRect(0, 0, w, h);
   }, []);
 
-  // ── Upload canvas to DB ──
-  const upload = useCallback(async () => {
-    const canvas = canvasRef.current;
-    if (!canvas || uploading.current) return;
-    uploading.current = true;
-    const data = canvas.toDataURL("image/jpeg", 0.7);
-    try {
-      await fetch(`/api/whiteboard/${id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data }),
-      });
-    } finally {
-      uploading.current = false;
-    }
-  }, [id]);
-
-  // ── Poll DB every 500ms, apply if newer and not drawing ──
-  const poll = useCallback(async () => {
-    if (!forceDownload.current && Date.now() - lastDrawTime.current < 2000) return;
-    forceDownload.current = false;
+  // ── 載入 DB 初始狀態 ──
+  const loadFromDb = useCallback(async () => {
     const res = await fetch(`/api/whiteboard/${id}`).catch(() => null);
     if (!res) return;
-    const { data, updatedAt } = await res.json();
-    if (!data || updatedAt <= lastSeenTs.current) return;
-    lastSeenTs.current = updatedAt;
+    const { data } = await res.json();
+    if (!data) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d")!;
     const img = new Image();
-    img.onload = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    };
+    img.onload = () => { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(img, 0, 0, canvas.width, canvas.height); };
     img.src = data;
   }, [id]);
 
+  // ── 存 DB（每 5 秒備份，供後來者載入初始狀態）──
+  const saveToDb = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const data = canvas.toDataURL("image/jpeg", 0.7);
+    fetch(`/api/whiteboard/${id}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ data }),
+    }).catch(() => {});
+  }, [id]);
+
   useEffect(() => {
-    const t = setTimeout(() => { initCanvas(); poll(); }, 200);
-    const interval = setInterval(poll, 300);
-    return () => { clearTimeout(t); clearInterval(interval); };
-  }, [initCanvas, poll]);
+    const t = setTimeout(() => { initCanvas(); loadFromDb(); }, 200);
+    const backup = setInterval(saveToDb, 5000);
+    return () => { clearTimeout(t); clearInterval(backup); };
+  }, [initCanvas, loadFromDb, saveToDb]);
 
   useEffect(() => {
     if (tab === "whiteboard") {
-      setTimeout(() => { initCanvas(); lastSeenTs.current = 0; forceDownload.current = true; poll(); }, 50);
+      setTimeout(() => { initCanvas(); loadFromDb(); }, 50);
     }
-  }, [tab, initCanvas, poll]);
+  }, [tab, initCanvas, loadFromDb]);
 
-  // ── Drawing ──
+  // ── 在 canvas 畫一段筆跡 ──
+  const drawSegments = useCallback((segments: any[], c: string, s: number, t: string) => {
+    const canvas = canvasRef.current;
+    if (!canvas || segments.length === 0) return;
+    const ctx = canvas.getContext("2d")!;
+    ctx.strokeStyle = t === "eraser" ? "#ffffff" : c;
+    ctx.lineWidth = t === "eraser" ? s * 4 : s;
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    for (const seg of segments) {
+      ctx.beginPath();
+      ctx.moveTo(seg.px * canvas.width, seg.py * canvas.height);
+      ctx.lineTo(seg.x * canvas.width, seg.y * canvas.height);
+      ctx.stroke();
+    }
+  }, []);
+
+  // ── Pusher 訂閱 ──
+  useEffect(() => {
+    if (!session) return;
+    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+    });
+    const channel = pusher.subscribe(`whiteboard-${id}`);
+    channel.bind("stroke", (data: any) => {
+      if (data.senderId === session.user.id) return;
+      if (data.type === "clear") {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d")!;
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+      drawSegments(data.points, data.color, data.size, data.tool);
+    });
+    return () => { channel.unbind_all(); pusher.unsubscribe(`whiteboard-${id}`); pusher.disconnect(); };
+  }, [id, session, drawSegments]);
+
+  // ── 每 50ms 批次送出積累的筆跡 ──
+  useEffect(() => {
+    const flush = setInterval(() => {
+      if (pendingPoints.current.length === 0) return;
+      const points = pendingPoints.current;
+      pendingPoints.current = [];
+      fetch(`/api/whiteboard/${id}/stroke`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ points, color: colorRef.current, size: sizeRef.current, tool: toolRef.current }),
+      }).catch(() => {});
+    }, 50);
+    return () => clearInterval(flush);
+  }, [id]);
+
+  // ── 畫圖事件 ──
   const getPos = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current!;
     const rect = canvas.getBoundingClientRect();
@@ -114,9 +161,7 @@ export default function RoomPage() {
   };
 
   const startDraw = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    drawing.current = true;
-    lastPos.current = getPos(e);
+    e.preventDefault(); drawing.current = true; lastPos.current = getPos(e);
   };
 
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
@@ -125,31 +170,32 @@ export default function RoomPage() {
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
     const pos = getPos(e);
-    ctx.beginPath();
-    ctx.moveTo(lastPos.current!.x, lastPos.current!.y);
-    ctx.lineTo(pos.x, pos.y);
+    const px = lastPos.current!.x; const py = lastPos.current!.y;
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(pos.x, pos.y);
     ctx.strokeStyle = wbTool === "eraser" ? "#ffffff" : color;
     ctx.lineWidth = wbTool === "eraser" ? size * 4 : size;
     ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.stroke();
+    // 積累到 buffer，50ms 後批次送出
+    pendingPoints.current.push({ px: px / canvas.width, py: py / canvas.height, x: pos.x / canvas.width, y: pos.y / canvas.height });
     lastPos.current = pos;
-    lastDrawTime.current = Date.now();
   };
 
   const stopDraw = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     if (!drawing.current) return;
-    drawing.current = false;
-    lastPos.current = null;
-    // 放開後立即存 DB，讓對方 500ms 內就能看到
-    upload();
+    drawing.current = false; lastPos.current = null;
   };
 
   const clearCanvas = () => {
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
     ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    lastDrawTime.current = Date.now();
-    upload();
+    fetch(`/api/whiteboard/${id}/stroke`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "clear" }),
+    }).catch(() => {});
+    saveToDb();
   };
 
   const handleComplete = async () => {
@@ -168,7 +214,6 @@ export default function RoomPage() {
 
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#111", overflow: "hidden" }}>
-      {/* Header */}
       <div style={{ background: "#1f2937", padding: "6px 12px", display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
         <span style={{ color: "white", fontWeight: "bold", fontSize: "14px", marginRight: "4px" }}>TutorLink 視訊教室</span>
         <button onClick={() => setTab("video")} style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 10px", background: tab === "video" ? "#4f46e5" : "#374151", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px" }}>
@@ -183,7 +228,6 @@ export default function RoomPage() {
         </button>
       </div>
 
-      {/* 白板工具列 */}
       {tab === "whiteboard" && (
         <div style={{ background: "#374151", padding: "4px 10px", display: "flex", alignItems: "center", gap: "8px", flexShrink: 0, overflowX: "auto" }}>
           <button onClick={() => setWbTool("pen")} style={{ padding: "3px 8px", background: wbTool === "pen" ? "#3b82f6" : "#4b5563", color: "white", border: "none", borderRadius: "5px", cursor: "pointer", fontSize: "12px" }}>筆</button>
@@ -199,26 +243,19 @@ export default function RoomPage() {
         </div>
       )}
 
-      {/* 內容區 */}
       <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
         {roomUrl && (
-          <iframe
-            src={roomUrl}
-            allow="camera; microphone; fullscreen; speaker; display-capture; autoplay"
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none", display: tab === "video" ? "block" : "none" }}
-          />
+          <iframe src={roomUrl} allow="camera; microphone; fullscreen; speaker; display-capture; autoplay"
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none", display: tab === "video" ? "block" : "none" }} />
         )}
         <div style={{ position: "absolute", inset: 0, background: "#f3f4f6", display: tab === "whiteboard" ? "block" : "none" }}>
-          <canvas
-            ref={canvasRef}
+          <canvas ref={canvasRef}
             style={{ display: "block", cursor: wbTool === "eraser" ? "cell" : "crosshair", touchAction: "none" }}
             onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw}
-            onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw}
-          />
+            onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw} />
         </div>
       </div>
 
-      {/* Leave Modal */}
       {leaveModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "16px" }}>
           <div style={{ background: "white", borderRadius: "20px", padding: "28px", width: "100%", maxWidth: "380px", textAlign: "center" }}>
