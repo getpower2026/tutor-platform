@@ -205,7 +205,7 @@ export default function AdminPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  {["學生", "老師", "上課時間", "金額", "狀態", "預約日"].map((h) => (
+                  {["學生", "老師", "上課時間", "金額", "狀態", "預約日", ""].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-gray-500 font-medium">{h}</th>
                   ))}
                 </tr>
@@ -228,6 +228,19 @@ export default function AdminPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-400">{formatDate(b.createdAt)}</td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={async () => {
+                          if (!confirm(`確定要刪除此預約？`)) return;
+                          const res = await fetch(`/api/admin/bookings/${b.id}`, { method: "DELETE" });
+                          if (res.ok) setData((prev: any) => ({ ...prev, bookings: prev.bookings.filter((x: any) => x.id !== b.id) }));
+                          else alert("刪除失敗");
+                        }}
+                        className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                      >
+                        <Trash2 className="w-3 h-3" />刪除
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
