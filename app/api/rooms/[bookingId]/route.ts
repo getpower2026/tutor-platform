@@ -17,8 +17,8 @@ export async function GET(_: Request, { params }: { params: Promise<{ bookingId:
   const isParticipant = booking.studentId === session.user.id || booking.teacherId === session.user.id;
   if (!isParticipant) return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
-  if (booking.paymentStatus !== "PAID") {
-    return NextResponse.json({ message: "尚未付款" }, { status: 402 });
+  if (booking.status !== "CONFIRMED") {
+    return NextResponse.json({ message: "預約尚未確認" }, { status: 402 });
   }
 
   // Create room if it doesn't exist
