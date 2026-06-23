@@ -28,7 +28,7 @@ export function Navbar() {
               <div className="flex items-center gap-2 sm:gap-3">
                 <Link href="/dashboard" className="flex items-center gap-1 text-gray-600 hover:text-gray-900 text-xs sm:text-base">
                   <LayoutDashboard className="w-3 h-3 sm:w-4 sm:h-4" />
-                  控制台
+                  控制台(上課)
                 </Link>
                 <button
                   onClick={() => signOut()}
