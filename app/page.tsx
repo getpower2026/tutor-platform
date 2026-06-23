@@ -34,6 +34,9 @@ export default function HomePage() {
           <p className="text-lg font-bold tracking-wide">
             ⚠️ 注意！本平台不收任何費用，免費提供。家長與老師請自行談妥費用進行收費。
           </p>
+          <p className="text-sm mt-1 text-red-100">
+            建議家長上課前確認老師良民證、畢業證書或在學證明。
+          </p>
         </div>
       </section>
 
