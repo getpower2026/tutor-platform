@@ -23,7 +23,9 @@ export async function POST(req: Request) {
 
   if (!booking) return NextResponse.json({ message: "找不到預約" }, { status: 404 });
   if (booking.studentId !== session.user.id) return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-  if (booking.status !== "COMPLETED") return NextResponse.json({ message: "課程尚未完成" }, { status: 400 });
+  if (booking.status !== "COMPLETED" && booking.status !== "CONFIRMED") {
+    return NextResponse.json({ message: "課程尚未完成" }, { status: 400 });
+  }
   if (booking.review) return NextResponse.json({ message: "已評價過" }, { status: 400 });
 
   const review = await prisma.review.create({
