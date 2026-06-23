@@ -86,6 +86,9 @@ function RegisterForm() {
             {role === "TEACHER" && (
               <p className="text-red-600 text-xs mt-1 font-medium">⚠️ 老師請填寫常用信箱，當學生預約上課時，系統將以此 Email 通知您。</p>
             )}
+            {role === "STUDENT" && (
+              <p className="text-amber-600 text-xs mt-1 font-medium">⚠️ 請填寫常用信箱，老師接受或拒絕預約時，通知將發送至此信箱。</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">密碼</label>
