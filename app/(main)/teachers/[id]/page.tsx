@@ -43,11 +43,16 @@ export default function TeacherDetailPage() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="card p-8 mb-6">
           <div className="flex flex-col sm:flex-row gap-6">
-            <div className="w-24 h-24 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
-              {teacher.user.image ? (
-                <Image src={teacher.user.image} alt={teacher.user.name} width={96} height={96} className="rounded-full object-cover" />
+            <div className="w-36 h-36 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+              {teacher.photoUrl ? (
+                <img src={teacher.photoUrl} alt={teacher.user.name} className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                    (e.target as HTMLImageElement).parentElement!.innerHTML = `<span class="text-5xl font-bold text-primary-600">${teacher.user.name[0]}</span>`;
+                  }}
+                />
               ) : (
-                <span className="text-4xl font-bold text-primary-600">{teacher.user.name[0]}</span>
+                <span className="text-5xl font-bold text-primary-600">{teacher.user.name[0]}</span>
               )}
             </div>
             <div className="flex-1">
