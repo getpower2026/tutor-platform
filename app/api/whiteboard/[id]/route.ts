@@ -11,7 +11,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 
   const { id } = await params;
   const row = await prisma.whiteboardData.findUnique({ where: { bookingId: id } });
-  return NextResponse.json({ data: row?.data || "" });
+  return NextResponse.json({ data: row?.data || "", updatedAt: row?.updatedAt?.getTime() || 0 });
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {

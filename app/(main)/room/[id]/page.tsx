@@ -4,7 +4,6 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Loader2, PhoneOff, Video, PenLine } from "lucide-react";
-import Pusher from "pusher-js";
 
 const COLORS = ["#000000", "#ef4444", "#3b82f6", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#ffffff"];
 const SIZES = [2, 5, 10, 20];
@@ -20,12 +19,13 @@ export default function RoomPage() {
   const [completing, setCompleting] = useState(false);
   const isTeacher = session?.user?.role === "TEACHER";
 
-  // Whiteboard
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   const lastPos = useRef<{ x: number; y: number } | null>(null);
-  const strokePath = useRef<{ px: number; py: number; x: number; y: number }[]>([]);
-  const dirty = useRef(false);
+  const lastDrawTime = useRef(0);
+  const lastSeenTs = useRef(0);
+  const uploading = useRef(false);
+
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
   const [wbTool, setWbTool] = useState<"pen" | "eraser">("pen");
@@ -40,7 +40,7 @@ export default function RoomPage() {
       });
   }, [id, session]);
 
-  // ── Canvas ──
+  // ── Canvas init ──
   const initCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -55,92 +55,56 @@ export default function RoomPage() {
     ctx.fillRect(0, 0, w, h);
   }, []);
 
+  // ── Upload canvas to DB ──
   const upload = useCallback(async () => {
     const canvas = canvasRef.current;
-    if (!canvas || !dirty.current) return;
-    dirty.current = false;
+    if (!canvas || uploading.current) return;
+    uploading.current = true;
     const data = canvas.toDataURL("image/png");
-    fetch(`/api/whiteboard/${id}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data }),
-    }).catch(() => {});
+    try {
+      await fetch(`/api/whiteboard/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data }),
+      });
+    } finally {
+      uploading.current = false;
+    }
   }, [id]);
 
-  const download = useCallback(async () => {
-    if (dirty.current) return;
+  // ── Poll DB every 500ms, apply if newer and not drawing ──
+  const poll = useCallback(async () => {
+    // 自己畫完後 2 秒內不拉取，避免覆蓋剛畫的內容
+    if (Date.now() - lastDrawTime.current < 2000) return;
     const res = await fetch(`/api/whiteboard/${id}`).catch(() => null);
     if (!res) return;
-    const { data } = await res.json();
-    if (!data) return;
+    const { data, updatedAt } = await res.json();
+    if (!data || updatedAt <= lastSeenTs.current) return;
+    lastSeenTs.current = updatedAt;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d")!;
     const img = new Image();
-    img.onload = () => { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(img, 0, 0, canvas.width, canvas.height); };
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    };
     img.src = data;
   }, [id]);
 
-  // 初始化 + 定期同步
   useEffect(() => {
-    const t = setTimeout(() => { initCanvas(); download(); }, 200);
-    const poll = setInterval(upload, 3000); // 每 3 秒把本地畫面存到 DB（供加入者抓初始狀態）
-    return () => { clearTimeout(t); clearInterval(poll); };
-  }, [initCanvas, download, upload]);
+    const t = setTimeout(() => { initCanvas(); poll(); }, 200);
+    const interval = setInterval(poll, 500);
+    return () => { clearTimeout(t); clearInterval(interval); };
+  }, [initCanvas, poll]);
 
-  // 切到白板 tab 時重新 init 並下載最新狀態
   useEffect(() => {
     if (tab === "whiteboard") {
-      setTimeout(() => {
-        initCanvas();
-        dirty.current = false;
-        download();
-      }, 50);
+      setTimeout(() => { initCanvas(); lastSeenTs.current = 0; poll(); }, 50);
     }
-  }, [tab, initCanvas, download]);
+  }, [tab, initCanvas, poll]);
 
-  // ── Pusher 即時同步 ──
-  const applyRemoteStroke = useCallback((data: any) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d")!;
-    if (data.type === "clear") {
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      return;
-    }
-    const { path, color, size, tool } = data;
-    if (!path || path.length === 0) return;
-    ctx.strokeStyle = tool === "eraser" ? "#ffffff" : color;
-    ctx.lineWidth = tool === "eraser" ? size * 4 : size;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    for (const seg of path) {
-      ctx.beginPath();
-      ctx.moveTo(seg.px * canvas.width, seg.py * canvas.height);
-      ctx.lineTo(seg.x * canvas.width, seg.y * canvas.height);
-      ctx.stroke();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!session) return;
-    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
-      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
-    });
-    const channel = pusher.subscribe(`whiteboard-${id}`);
-    channel.bind("stroke", (data: any) => {
-      if (data.senderId === session.user.id) return;
-      applyRemoteStroke(data);
-    });
-    return () => {
-      channel.unbind_all();
-      pusher.unsubscribe(`whiteboard-${id}`);
-      pusher.disconnect();
-    };
-  }, [id, session, applyRemoteStroke]);
-
-  // ── 畫圖事件 ──
+  // ── Drawing ──
   const getPos = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current!;
     const rect = canvas.getBoundingClientRect();
@@ -152,7 +116,6 @@ export default function RoomPage() {
     e.preventDefault();
     drawing.current = true;
     lastPos.current = getPos(e);
-    strokePath.current = [];
   };
 
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
@@ -161,42 +124,30 @@ export default function RoomPage() {
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
     const pos = getPos(e);
-    const px = lastPos.current!.x;
-    const py = lastPos.current!.y;
-    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(pos.x, pos.y);
+    ctx.beginPath();
+    ctx.moveTo(lastPos.current!.x, lastPos.current!.y);
+    ctx.lineTo(pos.x, pos.y);
     ctx.strokeStyle = wbTool === "eraser" ? "#ffffff" : color;
     ctx.lineWidth = wbTool === "eraser" ? size * 4 : size;
     ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.stroke();
-    strokePath.current.push({ px: px / canvas.width, py: py / canvas.height, x: pos.x / canvas.width, y: pos.y / canvas.height });
     lastPos.current = pos;
-    dirty.current = true;
+    lastDrawTime.current = Date.now();
   };
 
   const stopDraw = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
+    if (!drawing.current) return;
     drawing.current = false;
     lastPos.current = null;
-    if (strokePath.current.length === 0) return;
-    const path = strokePath.current;
-    strokePath.current = [];
-    // 廣播給對方
-    fetch(`/api/whiteboard/${id}/stroke`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path, color, size, tool: wbTool }),
-    }).catch(() => {});
+    // 放開後立即存 DB，讓對方 500ms 內就能看到
+    upload();
   };
 
   const clearCanvas = () => {
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
     ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    dirty.current = true;
-    fetch(`/api/whiteboard/${id}/stroke`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "clear" }),
-    }).catch(() => {});
+    lastDrawTime.current = Date.now();
     upload();
   };
 
