@@ -179,7 +179,7 @@ export default function TeacherProfilePage() {
                 className="input"
                 placeholder="0912-345-678"
               />
-              <p className="text-xs text-gray-400 mt-1">僅顯示給已付款預約的家長</p>
+              <p className="text-xs text-gray-400 mt-1">僅顯示給老師您同意的家長</p>
             </div>
           </div>
 
