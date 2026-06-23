@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import "@excalidraw/excalidraw/index.css";
+
 @layer base {
   :root {
     --background: 0 0% 100%;
