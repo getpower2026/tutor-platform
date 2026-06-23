@@ -144,7 +144,7 @@ export default function HomePage() {
           <h2 className="text-3xl font-bold text-center mb-12">為什麼選擇 TutorLink</h2>
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { icon: ShieldCheck, title: "免費使用", desc: "平台完全免費，不收取任何手續費，老師與學生直接討論收費方式" },
+              { icon: ShieldCheck, title: "免費使用", desc: "平台完全免費，不收取任何手續費，老師與家長直接電話討論收費方式、上課時間" },
               { icon: Video, title: "高品質視訊", desc: "使用 Daily.co 專業視訊技術，支援螢幕分享、虛擬白板，上課體驗流暢" },
               { icon: Star, title: "真實評價系統", desc: "所有評價來自實際上過課的學生，確保資訊透明可信" },
             ].map(({ icon: Icon, title, desc }) => (
