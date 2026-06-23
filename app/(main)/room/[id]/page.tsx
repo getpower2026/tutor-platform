@@ -46,10 +46,22 @@ export default function RoomPage() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [teacherName, setTeacherName] = useState("");
 
-  const cleaned = (id as string).replace(/[^a-zA-Z0-9]/g, "");
-  const roomId = cleaned.slice(0, 20).padEnd(20, "a");
-  const roomKey = cleaned.slice(0, 22).padEnd(22, "b");
-  const excalidrawUrl = `https://excalidraw.com/#room=${roomId},${roomKey}`;
+  const [excalidrawUrl, setExcalidrawUrl] = useState("");
+
+  useEffect(() => {
+    async function buildWhiteboardUrl() {
+      const enc = new TextEncoder();
+      const hashBuffer = await crypto.subtle.digest("SHA-256", enc.encode(id as string));
+      const bytes = new Uint8Array(hashBuffer);
+      // roomId: hex 前 20 bytes
+      const roomId = Array.from(bytes.slice(0, 10)).map(b => b.toString(16).padStart(2, "0")).join("");
+      // roomKey: base64url of 16 bytes (valid AES-128 key format for Excalidraw)
+      const roomKey = btoa(String.fromCharCode(...bytes.slice(10, 26)))
+        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+      setExcalidrawUrl(`https://excalidraw.com/#room=${roomId},${roomKey}`);
+    }
+    buildWhiteboardUrl();
+  }, [id]);
 
   useEffect(() => {
     if (!session) return;
