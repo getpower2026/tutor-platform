@@ -68,7 +68,7 @@ export default function HomePage() {
       {/* Subjects */}
       <section className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-2">專業學科教學</h2>
+          <h2 className="text-3xl font-bold text-center mb-2">學科教學</h2>
           <p className="text-gray-500 text-center mb-12">涵蓋 國小 國中 高中 高職，以及各大英語檢定</p>
           <div className="grid md:grid-cols-2 gap-8">
 
