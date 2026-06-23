@@ -116,15 +116,18 @@ export default function RoomPage() {
     }
   }, []);
 
-  // ── Pusher 訂閱 ──
+  // ── Pusher 訂閱（private channel + client events）──
+  const channelRef = useRef<any>(null);
+
   useEffect(() => {
     if (!session) return;
     const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
       cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+      authEndpoint: "/api/pusher/auth",
     });
-    const channel = pusher.subscribe(`whiteboard-${id}`);
-    channel.bind("stroke", (data: any) => {
-      if (data.senderId === session.user.id) return;
+    const channel = pusher.subscribe(`private-whiteboard-${id}`);
+    channelRef.current = channel;
+    channel.bind("client-stroke", (data: any) => {
       if (data.type === "clear") {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -134,23 +137,22 @@ export default function RoomPage() {
       }
       drawSegments(data.points, data.color, data.size, data.tool);
     });
-    return () => { channel.unbind_all(); pusher.unsubscribe(`whiteboard-${id}`); pusher.disconnect(); };
+    return () => { channel.unbind_all(); pusher.unsubscribe(`private-whiteboard-${id}`); pusher.disconnect(); channelRef.current = null; };
   }, [id, session, drawSegments]);
 
-  // ── 每 50ms 批次送出積累的筆跡 ──
+  // ── 每 50ms 批次送出（直接從瀏覽器送，不經過伺服器）──
   useEffect(() => {
     const flush = setInterval(() => {
       if (pendingPoints.current.length === 0) return;
+      if (!channelRef.current) return;
       const points = pendingPoints.current;
       pendingPoints.current = [];
-      fetch(`/api/whiteboard/${id}/stroke`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ points, color: colorRef.current, size: sizeRef.current, tool: toolRef.current }),
-      }).catch(() => {});
+      channelRef.current.trigger("client-stroke", {
+        points, color: colorRef.current, size: sizeRef.current, tool: toolRef.current,
+      });
     }, 50);
     return () => clearInterval(flush);
-  }, [id]);
+  }, []);
 
   // ── 畫圖事件 ──
   const getPos = (e: React.MouseEvent | React.TouchEvent) => {
@@ -190,11 +192,7 @@ export default function RoomPage() {
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
     ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    fetch(`/api/whiteboard/${id}/stroke`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "clear" }),
-    }).catch(() => {});
+    channelRef.current?.trigger("client-stroke", { type: "clear" });
     saveToDb();
   };
 
