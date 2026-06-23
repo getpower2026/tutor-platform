@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
-import { Calendar, Video, Clock, CheckCircle, XCircle, AlertCircle, User, KeyRound } from "lucide-react";
+import { Calendar, Video, Clock, CheckCircle, XCircle, AlertCircle, User, KeyRound, RefreshCw } from "lucide-react";
 import { formatDateTime, formatNTD } from "@/lib/utils";
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
@@ -26,12 +26,18 @@ export default function DashboardPage() {
     if (status === "unauthenticated") router.push("/login");
   }, [status, router]);
 
+  const fetchBookings = () => {
+    fetch("/api/bookings").then((r) => r.json()).then((d) => {
+      setBookings(Array.isArray(d) ? d : []);
+      setLoading(false);
+    });
+  };
+
   useEffect(() => {
     if (session) {
-      fetch("/api/bookings").then((r) => r.json()).then((d) => {
-        setBookings(Array.isArray(d) ? d : []);
-        setLoading(false);
-      });
+      fetchBookings();
+      const interval = setInterval(fetchBookings, 30000);
+      return () => clearInterval(interval);
     }
   }, [session]);
 
@@ -100,8 +106,12 @@ export default function DashboardPage() {
 
         {/* Bookings */}
         <div className="card">
-          <div className="px-6 py-4 border-b border-gray-100">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
             <h2 className="font-bold text-lg">所有預約</h2>
+            <button onClick={fetchBookings} className="flex items-center gap-1 text-sm text-gray-500 hover:text-primary-600">
+              <RefreshCw className="w-4 h-4" />
+              重新整理
+            </button>
           </div>
           {loading ? (
             <div className="p-8 text-center text-gray-400">載入中...</div>
