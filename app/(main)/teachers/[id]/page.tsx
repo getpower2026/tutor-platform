@@ -100,16 +100,11 @@ export default function TeacherDetailPage() {
             <h2 className="font-bold text-lg mb-4">預約課程</h2>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-500">課程費用</span>
+                <span className="text-gray-500">參考時薪</span>
                 <span className="font-medium">{formatNTD(teacher.hourlyRate)} / 小時</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">平台手續費</span>
-                <span className="font-medium">15%</span>
-              </div>
-              <div className="border-t pt-3 flex justify-between font-bold">
-                <span>付款保障</span>
-                <span className="text-green-600">Stripe 加密</span>
+              <div className="border-t pt-3 text-xs text-gray-400">
+                實際收費由老師與家長自行討論，本平台完全免費。
               </div>
             </div>
             <button
