@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     data: { resetToken: token, resetTokenExpiry: expiry },
   });
 
-  if (process.env.GMAIL_USER) {
+  if (process.env.RESEND_API_KEY) {
     const resetUrl = `https://www.tutorlink.cc/reset-password/${token}`;
     await sendMail({
       to: email,

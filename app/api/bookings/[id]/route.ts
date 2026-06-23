@@ -58,7 +58,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   });
 
   // 發信通知學生
-  if (process.env.GMAIL_USER && (status === "CONFIRMED" || status === "CANCELLED")) {
+  if (process.env.RESEND_API_KEY && (status === "CONFIRMED" || status === "CANCELLED")) {
     const studentEmail = (booking as any).student?.email;
     const studentName = (booking as any).student?.name;
     const teacherName = (booking as any).teacher?.name;

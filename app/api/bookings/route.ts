@@ -57,7 +57,7 @@ export async function POST(req: Request) {
 
   // 發信通知老師
   const teacherEmail = (teacher as any).user?.email;
-  if (teacherEmail && process.env.GMAIL_USER) {
+  if (teacherEmail && process.env.RESEND_API_KEY) {
     const start = new Date(startTime);
     const dateStr = start.toLocaleString("zh-TW", { timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
     await sendMail({
