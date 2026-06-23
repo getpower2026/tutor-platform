@@ -80,13 +80,13 @@ function RegisterForm() {
             {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input {...register("email", { required: "請輸入 Email" })} type="email" className="input" placeholder="your@email.com" />
-            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
-            {role === "TEACHER" && (
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*必填</span></label>
+            <input {...register("email", { required: "❌ Email 為必填，老師通知將發送至此信箱" })} type="email" className="input" placeholder="your@email.com" />
+            {errors.email && <p className="text-red-500 text-xs mt-1 font-medium">{errors.email.message}</p>}
+            {!errors.email && role === "TEACHER" && (
               <p className="text-red-600 text-xs mt-1 font-medium">⚠️ 老師請填寫常用信箱，當學生預約上課時，系統將以此 Email 通知您。</p>
             )}
-            {role === "STUDENT" && (
+            {!errors.email && role === "STUDENT" && (
               <p className="text-amber-600 text-xs mt-1 font-medium">⚠️ 請填寫常用信箱，老師接受或拒絕預約時，通知將發送至此信箱。</p>
             )}
           </div>
@@ -101,17 +101,14 @@ function RegisterForm() {
             {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">聯絡手機</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">聯絡手機 <span className="text-red-500">*必填</span></label>
             <input
-              {...register("phone", { required: "請填寫聯絡手機" })}
+              {...register("phone", { required: "❌ 手機號碼為必填" })}
               type="tel"
               className="input"
               placeholder="0912-345-678"
             />
-            {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
-            {role === "STUDENT" && (
-              <p className="text-gray-400 text-xs mt-1">方便老師在需要時與您聯繫。</p>
-            )}
+            {errors.phone && <p className="text-red-500 text-xs mt-1 font-medium">{errors.phone.message}</p>}
           </div>
           <button type="submit" disabled={loading} className="btn-primary w-full">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "建立帳號"}
