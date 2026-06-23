@@ -143,9 +143,10 @@ export default function RoomPage() {
         </button>
         <button
           onClick={leaveRoom}
-          className="w-13 h-11 px-4 rounded-full bg-red-500 text-white hover:bg-red-600 flex items-center justify-center"
+          className="h-11 px-5 rounded-full bg-red-500 text-white hover:bg-red-600 flex items-center justify-center gap-2 font-medium"
         >
           <PhoneOff className="w-5 h-5" />
+          離開教室
         </button>
       </div>
     </div>
