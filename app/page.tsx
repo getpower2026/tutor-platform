@@ -11,7 +11,7 @@ export default function HomePage() {
       <section className="bg-gradient-to-br from-primary-600 to-primary-800 text-white py-24 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-5xl font-bold mb-6 leading-tight">
-            在家就能學習<br />找到最適合你的老師
+            <span className="bg-yellow-300 text-yellow-900 px-2 rounded">免費</span>在家就能學習<br />找到最適合你的老師
           </h1>
           <p className="text-xl text-primary-100 mb-10 max-w-2xl mx-auto">
             TutorLink 連結專業老師與求知學生，透過安全的視訊系統，隨時隨地一對一上課。
