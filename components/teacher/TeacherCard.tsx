@@ -22,11 +22,19 @@ export function TeacherCard({ teacher }: Props) {
   return (
     <Link href={`/teachers/${teacher.userId}`} className="card p-6 hover:shadow-md transition-shadow block">
       <div className="flex items-start gap-4 mb-4">
-        <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
+        <div className="w-24 h-24 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
           {teacher.photoUrl ? (
-            <img src={teacher.photoUrl} alt={teacher.user.name} className="w-full h-full object-cover" />
+            <img
+              src={teacher.photoUrl}
+              alt={teacher.user.name}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+                (e.target as HTMLImageElement).parentElement!.innerHTML = `<span class="text-3xl font-bold text-primary-600">${teacher.user.name[0]}</span>`;
+              }}
+            />
           ) : (
-            <span className="text-2xl font-bold text-primary-600">{teacher.user.name[0]}</span>
+            <span className="text-3xl font-bold text-primary-600">{teacher.user.name[0]}</span>
           )}
         </div>
         <div className="flex-1 min-w-0">
