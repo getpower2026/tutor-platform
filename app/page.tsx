@@ -73,7 +73,7 @@ export default function HomePage() {
       <section className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-2">專業學科教學</h2>
-          <p className="text-gray-500 text-center mb-12">涵蓋國小至高中職全科，以及各大英語檢定</p>
+          <p className="text-gray-500 text-center mb-12">涵蓋 國小 國中 高中 高職，以及各大英語檢定</p>
           <div className="grid md:grid-cols-2 gap-8">
 
             {/* 學制 */}
@@ -81,7 +81,7 @@ export default function HomePage() {
               <h3 className="font-bold text-lg text-primary-600 mb-4">📚 適用學制</h3>
               <div className="flex flex-wrap gap-2">
                 {["國小", "國中", "高中", "高職"].map((s) => (
-                  <span key={s} className="px-4 py-2 bg-primary-50 text-primary-700 rounded-full font-medium text-sm">{s}</span>
+                  <span key={s} className="px-5 py-2.5 bg-primary-50 text-primary-700 rounded-full font-bold text-base">{s}</span>
                 ))}
               </div>
             </div>
@@ -91,7 +91,7 @@ export default function HomePage() {
               <h3 className="font-bold text-lg text-primary-600 mb-4">✏️ 主科</h3>
               <div className="flex flex-wrap gap-2">
                 {["國文", "英文", "數學"].map((s) => (
-                  <span key={s} className="px-4 py-2 bg-blue-50 text-blue-700 rounded-full font-medium text-sm">{s}</span>
+                  <span key={s} className="px-5 py-2.5 bg-blue-50 text-blue-700 rounded-full font-bold text-base">{s}</span>
                 ))}
               </div>
             </div>
@@ -101,7 +101,7 @@ export default function HomePage() {
               <h3 className="font-bold text-lg text-primary-600 mb-4">🌏 社會領域</h3>
               <div className="flex flex-wrap gap-2">
                 {["社會", "歷史", "地理", "公民"].map((s) => (
-                  <span key={s} className="px-4 py-2 bg-green-50 text-green-700 rounded-full font-medium text-sm">{s}</span>
+                  <span key={s} className="px-5 py-2.5 bg-green-50 text-green-700 rounded-full font-bold text-base">{s}</span>
                 ))}
               </div>
             </div>
@@ -111,7 +111,7 @@ export default function HomePage() {
               <h3 className="font-bold text-lg text-primary-600 mb-4">🔬 自然領域</h3>
               <div className="flex flex-wrap gap-2">
                 {["自然", "物理", "化學", "生物", "地科", "理化"].map((s) => (
-                  <span key={s} className="px-4 py-2 bg-orange-50 text-orange-700 rounded-full font-medium text-sm">{s}</span>
+                  <span key={s} className="px-5 py-2.5 bg-orange-50 text-orange-700 rounded-full font-bold text-base">{s}</span>
                 ))}
               </div>
             </div>
@@ -121,7 +121,7 @@ export default function HomePage() {
               <h3 className="font-bold text-lg text-primary-600 mb-4">🏆 英語檢定 & 升學考試</h3>
               <div className="flex flex-wrap gap-2">
                 {["全民英檢 (GEPT)", "多益 (TOEIC)", "劍橋英檢", "升私中"].map((s) => (
-                  <span key={s} className="px-4 py-2 bg-purple-50 text-purple-700 rounded-full font-medium text-sm">{s}</span>
+                  <span key={s} className="px-5 py-2.5 bg-purple-50 text-purple-700 rounded-full font-bold text-base">{s}</span>
                 ))}
               </div>
             </div>
