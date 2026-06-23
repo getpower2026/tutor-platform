@@ -170,19 +170,6 @@ export default function HomePage() {
           <h2 className="text-3xl font-bold text-center mb-4">創辦人介紹｜汪主任</h2>
           <p className="text-red-600 text-center mb-6">14年一對一補教經驗，用心媒合每一位學生與老師</p>
 
-          {/* 亮點標籤 */}
-          <div className="flex flex-wrap justify-center gap-4 mb-12">
-            {[
-              { emoji: "🏆", text: "14 年補教經驗" },
-              { emoji: "🏫", text: "實體補習班經營背景" },
-              { emoji: "🎯", text: "專注一對一師資媒合" },
-            ].map(({ emoji, text }) => (
-              <div key={text} className="flex items-center gap-2 px-5 py-3 bg-red-50 border-2 border-red-200 rounded-2xl shadow-sm">
-                <span className="text-2xl">{emoji}</span>
-                <span className="font-bold text-red-700 text-base">{text}</span>
-              </div>
-            ))}
-          </div>
 
           <div className="grid md:grid-cols-2 gap-12 items-center mb-12">
             {/* Left: text */}
