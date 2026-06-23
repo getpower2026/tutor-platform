@@ -200,13 +200,13 @@ export default function RoomPage() {
           className="absolute inset-0"
           style={{ display: tab === "video" ? "block" : "none" }}
         />
-        {tab === "whiteboard" && (
-          <iframe
-            src={excalidrawUrl}
-            className="absolute inset-0 w-full h-full border-none"
-            allow="clipboard-read; clipboard-write"
-          />
-        )}
+        {/* 白板永遠掛在 DOM，只用 CSS 顯示/隱藏，保持 Excalidraw 連線不斷 */}
+        <iframe
+          src={excalidrawUrl}
+          className="absolute inset-0 w-full h-full border-none"
+          allow="clipboard-read; clipboard-write"
+          style={{ display: tab === "whiteboard" ? "block" : "none" }}
+        />
       </div>
 
       {/* 中文控制列 */}
