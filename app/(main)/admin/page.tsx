@@ -35,7 +35,8 @@ export default function AdminPage() {
         students: prev.students.filter((s: any) => s.id !== userId),
       }));
     } else {
-      alert("刪除失敗，請再試一次");
+      const err = await res.json().catch(() => ({}));
+      alert(`刪除失敗：${err.message || res.status}`);
     }
     setDeleting(null);
   };
