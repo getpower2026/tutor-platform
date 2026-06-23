@@ -13,10 +13,14 @@ export async function POST(req: Request) {
   const file = formData.get("file") as File;
   if (!file) return NextResponse.json({ message: "No file" }, { status: 400 });
 
-  const ext = file.name.split(".").pop();
-  const blob = await put(`teachers/${session.user.id}.${ext}`, file, {
-    access: "public",
-  });
-
-  return NextResponse.json({ url: blob.url });
+  try {
+    const ext = file.name.split(".").pop() || "jpg";
+    const blob = await put(`teachers/${session.user.id}.${ext}`, file, {
+      access: "public",
+    });
+    return NextResponse.json({ url: blob.url });
+  } catch (err: any) {
+    console.error("Blob upload error:", err);
+    return NextResponse.json({ message: err?.message || String(err) }, { status: 500 });
+  }
 }
