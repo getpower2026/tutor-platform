@@ -1,25 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Loader2, PhoneOff, PenLine } from "lucide-react";
+import dynamic from "next/dynamic";
+import { Loader2, PhoneOff, Video, PenLine } from "lucide-react";
 
-function getExcalidrawUrl(bookingId: string) {
-  const roomId = bookingId.replace(/-/g, "").slice(0, 20).padEnd(20, "0");
-  const key = btoa(bookingId).replace(/[^a-zA-Z0-9]/g, "").slice(0, 22).padEnd(22, "A");
-  return `https://excalidraw.com/#room=${roomId},${key}`;
-}
+// Load Excalidraw only on client side (it uses browser APIs)
+const Excalidraw = dynamic(
+  async () => (await import("@excalidraw/excalidraw")).Excalidraw,
+  { ssr: false, loading: () => <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#9ca3af" }}><Loader2 style={{ width: 24, height: 24, animation: "spin 1s linear infinite" }} /></div> }
+);
 
 export default function RoomPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { data: session } = useSession();
+  const [tab, setTab] = useState<"video" | "whiteboard">("video");
   const [roomUrl, setRoomUrl] = useState("");
   const [error, setError] = useState("");
   const [leaveModal, setLeaveModal] = useState(false);
   const [completing, setCompleting] = useState(false);
   const isTeacher = session?.user?.role === "TEACHER";
+
+  // Excalidraw sync via Pusher
+  const excalidrawApiRef = useRef<any>(null);
+  const lastSyncRef = useRef<string>("");
+  const pusherRef = useRef<any>(null);
+  const mySocketIdRef = useRef<string>("");
+  const flushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingElementsRef = useRef<any[]>([]);
 
   useEffect(() => {
     if (!session) return;
@@ -31,10 +41,50 @@ export default function RoomPage() {
       });
   }, [id, session]);
 
-  const openWhiteboard = () => {
-    const url = getExcalidrawUrl(id);
-    window.open(url, "whiteboard", "width=1280,height=800,left=100,top=100");
-  };
+  // Pusher setup
+  useEffect(() => {
+    if (!session) return;
+    let channel: any;
+    import("pusher-js").then(({ default: Pusher }) => {
+      const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+        cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+      });
+      pusherRef.current = pusher;
+      pusher.connection.bind("connected", () => {
+        mySocketIdRef.current = pusher.connection.socket_id;
+      });
+      channel = pusher.subscribe(`whiteboard-${id}`);
+      channel.bind("elements", (data: any) => {
+        if (data.senderSocketId && data.senderSocketId === mySocketIdRef.current) return;
+        if (excalidrawApiRef.current && data.elements) {
+          excalidrawApiRef.current.updateScene({ elements: data.elements });
+        }
+      });
+    });
+    return () => {
+      pusherRef.current?.unsubscribe(`whiteboard-${id}`);
+      pusherRef.current?.disconnect();
+    };
+  }, [id, session]);
+
+  const handleExcalidrawChange = useCallback((elements: readonly any[]) => {
+    const json = JSON.stringify(elements);
+    if (json === lastSyncRef.current) return;
+    lastSyncRef.current = json;
+    pendingElementsRef.current = elements as any[];
+
+    // Debounce 300ms then flush
+    if (flushTimerRef.current) clearTimeout(flushTimerRef.current);
+    flushTimerRef.current = setTimeout(() => {
+      const toSend = pendingElementsRef.current;
+      if (!toSend.length) return;
+      fetch(`/api/whiteboard/${id}/stroke`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ elements: toSend, senderSocketId: mySocketIdRef.current }),
+      }).catch(() => {});
+    }, 300);
+  }, [id]);
 
   const handleComplete = async () => {
     setCompleting(true);
@@ -67,12 +117,21 @@ export default function RoomPage() {
           </span>
         )}
 
-        <button
-          onClick={openWhiteboard}
-          style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 12px", background: "#7c3aed", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
-        >
-          <PenLine style={{ width: 14, height: 14 }} /> 開啟白板
-        </button>
+        {/* Tabs */}
+        <div style={{ display: "flex", gap: "4px", marginLeft: "8px" }}>
+          <button
+            onClick={() => setTab("video")}
+            style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 12px", background: tab === "video" ? "#3b82f6" : "#374151", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
+          >
+            <Video style={{ width: 14, height: 14 }} /> 視訊
+          </button>
+          <button
+            onClick={() => setTab("whiteboard")}
+            style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 12px", background: tab === "whiteboard" ? "#7c3aed" : "#374151", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
+          >
+            <PenLine style={{ width: 14, height: 14 }} /> 白板
+          </button>
+        </div>
 
         <button
           onClick={() => setLeaveModal(true)}
@@ -82,15 +141,31 @@ export default function RoomPage() {
         </button>
       </div>
 
-      {/* 視訊 */}
-      <div style={{ flex: 1, minHeight: 0 }}>
-        {roomUrl && (
-          <iframe
-            src={roomUrl}
-            allow="camera; microphone; fullscreen; speaker; display-capture; autoplay"
-            style={{ width: "100%", height: "100%", border: "none" }}
-          />
-        )}
+      {/* Content area — both always mounted, CSS toggle */}
+      <div style={{ flex: 1, minHeight: 0, position: "relative" }}>
+        {/* Video iframe — always mounted */}
+        <div style={{ position: "absolute", inset: 0, display: tab === "video" ? "block" : "none" }}>
+          {roomUrl && (
+            <iframe
+              src={roomUrl}
+              allow="camera; microphone; fullscreen; speaker; display-capture; autoplay"
+              style={{ width: "100%", height: "100%", border: "none" }}
+            />
+          )}
+        </div>
+
+        {/* Whiteboard — always mounted once session ready */}
+        <div style={{ position: "absolute", inset: 0, display: tab === "whiteboard" ? "block" : "none" }}>
+          {session && (
+            <Excalidraw
+              excalidrawAPI={(api) => { excalidrawApiRef.current = api; }}
+              onChange={handleExcalidrawChange}
+              UIOptions={{
+                canvasActions: { export: false, loadScene: false, saveAsImage: true, saveToActiveFile: false },
+              }}
+            />
+          )}
+        </div>
       </div>
 
       {/* Leave Modal */}
