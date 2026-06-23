@@ -49,6 +49,7 @@ export default function HomePage() {
             {[
               { icon: Search, step: "1", title: "搜尋老師", desc: "依科目、時段篩選，找到最適合的老師" },
               { icon: Video, step: "2", title: "預約上課", desc: "選擇時段，即刻確認預約，免費開始學習" },
+              { icon: BookOpen, step: "3", title: "進入視訊平台", desc: "老師確認後，點「進入教室」即可線上上課" },
             ].map(({ icon: Icon, step, title, desc }) => (
               <div key={step} className="text-center">
                 <div className="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
