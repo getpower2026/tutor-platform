@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Loader2, PhoneOff, Video, PenLine, ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import Pusher from "pusher-js";
+import { Loader2, PhoneOff, PenLine } from "lucide-react";
 
-const COLORS = ["#000000", "#ef4444", "#3b82f6", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#ffffff"];
-const SIZES = [2, 5, 10, 20];
+function getExcalidrawUrl(bookingId: string) {
+  const roomId = bookingId.replace(/-/g, "").slice(0, 20).padEnd(20, "0");
+  const key = btoa(bookingId).replace(/[^a-zA-Z0-9]/g, "").slice(0, 22).padEnd(22, "A");
+  return `https://excalidraw.com/#room=${roomId},${key}`;
+}
 
 export default function RoomPage() {
   const { id } = useParams<{ id: string }>();
@@ -15,216 +17,39 @@ export default function RoomPage() {
   const { data: session } = useSession();
   const [roomUrl, setRoomUrl] = useState("");
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<"video" | "whiteboard">("video");
   const [leaveModal, setLeaveModal] = useState(false);
   const [completing, setCompleting] = useState(false);
   const isTeacher = session?.user?.role === "TEACHER";
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const drawing = useRef(false);
-  const lastPos = useRef<{ x: number; y: number } | null>(null);
-  const pendingPoints = useRef<{ px: number; py: number; x: number; y: number }[]>([]);
-  const channelRef = useRef<any>(null);
-
-  const [color, setColor] = useState("#000000");
-  const [size, setSize] = useState(5);
-  const [wbTool, setWbTool] = useState<"pen" | "eraser">("pen");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-
-  const colorRef = useRef(color);
-  const sizeRef = useRef(size);
-  const toolRef = useRef(wbTool);
-  const currentPageRef = useRef(currentPage);
-  useEffect(() => { colorRef.current = color; }, [color]);
-  useEffect(() => { sizeRef.current = size; }, [size]);
-  useEffect(() => { toolRef.current = wbTool; }, [wbTool]);
-  useEffect(() => { currentPageRef.current = currentPage; }, [currentPage]);
-
   useEffect(() => {
     if (!session) return;
-    fetch(`/api/rooms/${id}`).then((r) => r.json()).then((d) => {
-      if (d.message) { setError(d.message); return; }
-      setRoomUrl(`https://${process.env.NEXT_PUBLIC_DAILY_DOMAIN}/${d.roomName}?t=${d.token}`);
-    });
+    fetch(`/api/rooms/${id}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.message) { setError(d.message); return; }
+        setRoomUrl(`https://${process.env.NEXT_PUBLIC_DAILY_DOMAIN}/${d.roomName}?t=${d.token}`);
+      });
   }, [id, session]);
 
-  const initCanvas = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const w = window.innerWidth;
-    const h = window.innerHeight - 88;
-    canvas.width = w; canvas.height = h;
-    canvas.style.width = w + "px"; canvas.style.height = h + "px";
-    const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, w, h);
-  }, []);
-
-  const loadPage = useCallback(async (page: number) => {
-    initCanvas();
-    const res = await fetch(`/api/whiteboard/${id}?page=${page}`).catch(() => null);
-    if (!res) return;
-    const { data } = await res.json();
-    if (!data) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d")!;
-    const img = new Image();
-    img.onload = () => { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(img, 0, 0, canvas.width, canvas.height); };
-    img.src = data;
-  }, [id, initCanvas]);
-
-  const savePage = useCallback((page: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const data = canvas.toDataURL("image/jpeg", 0.7);
-    fetch(`/api/whiteboard/${id}?page=${page}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data }),
-    }).catch(() => {});
-  }, [id]);
-
-  const fetchPageCount = useCallback(async () => {
-    const res = await fetch(`/api/whiteboard/${id}`, { method: "PATCH" }).catch(() => null);
-    if (!res) return;
-    const { pages } = await res.json();
-    setTotalPages(Math.max(...pages, 1));
-  }, [id]);
-
-  useEffect(() => {
-    const t = setTimeout(() => { fetchPageCount(); loadPage(1); }, 200);
-    const backup = setInterval(() => savePage(currentPageRef.current), 5000);
-    return () => { clearTimeout(t); clearInterval(backup); };
-  }, [fetchPageCount, loadPage, savePage]);
-
-  useEffect(() => {
-    if (tab === "whiteboard") setTimeout(() => loadPage(currentPage), 50);
-  }, [tab, loadPage, currentPage]);
-
-  const drawSegments = useCallback((segments: any[], c: string, s: number, t: string) => {
-    const canvas = canvasRef.current;
-    if (!canvas || segments.length === 0) return;
-    const ctx = canvas.getContext("2d")!;
-    ctx.strokeStyle = t === "eraser" ? "#ffffff" : c;
-    ctx.lineWidth = t === "eraser" ? s * 4 : s;
-    ctx.lineCap = "round"; ctx.lineJoin = "round";
-    for (const seg of segments) {
-      ctx.beginPath();
-      ctx.moveTo(seg.px * canvas.width, seg.py * canvas.height);
-      ctx.lineTo(seg.x * canvas.width, seg.y * canvas.height);
-      ctx.stroke();
-    }
-  }, []);
-
-  // ── Pusher 訂閱（公開 channel，伺服器觸發）──
-  const mySocketId = useRef<string>("");
-
-  useEffect(() => {
-    if (!session) return;
-    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
-      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
-    });
-    pusher.connection.bind("connected", () => {
-      mySocketId.current = pusher.connection.socket_id;
-    });
-    const channel = pusher.subscribe(`whiteboard-${id}`);
-    channel.bind("stroke", (data: any) => {
-      if (data.senderSocketId && data.senderSocketId === mySocketId.current) return;
-      if (data.type === "clear") {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext("2d")!;
-        ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        return;
-      }
-      if (data.type === "page-change") {
-        setCurrentPage(data.page);
-        setTotalPages((p) => Math.max(p, data.page));
-        setTimeout(() => loadPage(data.page), 50);
-        return;
-      }
-      drawSegments(data.points, data.color, data.size, data.tool);
-    });
-    return () => { channel.unbind_all(); pusher.unsubscribe(`whiteboard-${id}`); pusher.disconnect(); };
-  }, [id, session, drawSegments, loadPage]);
-
-  // ── 每 80ms 批次送至伺服器 → Pusher 廣播 ──
-  useEffect(() => {
-    const flush = setInterval(() => {
-      if (pendingPoints.current.length === 0) return;
-      const points = pendingPoints.current;
-      pendingPoints.current = [];
-      fetch(`/api/whiteboard/${id}/stroke`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ points, color: colorRef.current, size: sizeRef.current, tool: toolRef.current, senderSocketId: mySocketId.current }),
-      }).catch(() => {});
-    }, 80);
-    return () => clearInterval(flush);
-  }, [id]);
-
-  const getPos = (e: React.MouseEvent | React.TouchEvent) => {
-    const canvas = canvasRef.current!;
-    const rect = canvas.getBoundingClientRect();
-    if ("touches" in e) return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-  };
-
-  const startDraw = (e: React.MouseEvent | React.TouchEvent) => { e.preventDefault(); drawing.current = true; lastPos.current = getPos(e); };
-
-  const draw = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    if (!drawing.current) return;
-    const canvas = canvasRef.current!;
-    const ctx = canvas.getContext("2d")!;
-    const pos = getPos(e);
-    const px = lastPos.current!.x; const py = lastPos.current!.y;
-    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(pos.x, pos.y);
-    ctx.strokeStyle = wbTool === "eraser" ? "#ffffff" : color;
-    ctx.lineWidth = wbTool === "eraser" ? size * 4 : size;
-    ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.stroke();
-    pendingPoints.current.push({ px: px / canvas.width, py: py / canvas.height, x: pos.x / canvas.width, y: pos.y / canvas.height });
-    lastPos.current = pos;
-  };
-
-  const stopDraw = (e: React.MouseEvent | React.TouchEvent) => { e.preventDefault(); drawing.current = false; lastPos.current = null; };
-
-  const clearCanvas = () => {
-    const canvas = canvasRef.current!;
-    const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    channelRef.current?.trigger("client-stroke", { type: "clear" });
-    savePage(currentPage);
-  };
-
-  const switchPage = (page: number) => {
-    savePage(currentPage);
-    setCurrentPage(page);
-    loadPage(page);
-    channelRef.current?.trigger("client-stroke", { type: "page-change", page });
-  };
-
-  const addPage = () => {
-    savePage(currentPage);
-    const newPage = totalPages + 1;
-    setTotalPages(newPage);
-    setCurrentPage(newPage);
-    initCanvas();
-    savePage(newPage);
-    channelRef.current?.trigger("client-stroke", { type: "page-change", page: newPage });
+  const openWhiteboard = () => {
+    const url = getExcalidrawUrl(id);
+    window.open(url, "whiteboard", "width=1280,height=800,left=100,top=100");
   };
 
   const handleComplete = async () => {
     setCompleting(true);
-    savePage(currentPage);
-    await fetch(`/api/bookings/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "COMPLETED" }) }).catch(() => {});
+    await fetch(`/api/bookings/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "COMPLETED" }),
+    }).catch(() => {});
     router.push("/dashboard");
   };
 
   if (error) return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
-      <div className="text-center"><p className="text-xl mb-4">{error}</p>
+      <div className="text-center">
+        <p className="text-xl mb-4">{error}</p>
         <button onClick={() => router.push("/dashboard")} className="px-4 py-2 bg-gray-600 rounded-lg">回到控制台</button>
       </div>
     </div>
@@ -234,65 +59,38 @@ export default function RoomPage() {
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#111", overflow: "hidden" }}>
       {/* Header */}
       <div style={{ background: "#1f2937", padding: "6px 12px", display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-        <span style={{ color: "white", fontWeight: "bold", fontSize: "14px", marginRight: "4px" }}>TutorLink 視訊教室</span>
-        <button onClick={() => setTab("video")} style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 10px", background: tab === "video" ? "#4f46e5" : "#374151", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px" }}>
-          <Video style={{ width: 14, height: 14 }} /> 視訊
+        <span style={{ color: "white", fontWeight: "bold", fontSize: "14px" }}>TutorLink 視訊教室</span>
+
+        {!roomUrl && (
+          <span style={{ color: "#9ca3af", fontSize: "12px", display: "flex", alignItems: "center", gap: "4px" }}>
+            <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />連線中...
+          </span>
+        )}
+
+        <button
+          onClick={openWhiteboard}
+          style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 12px", background: "#7c3aed", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
+        >
+          <PenLine style={{ width: 14, height: 14 }} /> 開啟白板
         </button>
-        <button onClick={() => setTab("whiteboard")} style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 10px", background: tab === "whiteboard" ? "#7c3aed" : "#374151", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px" }}>
-          <PenLine style={{ width: 14, height: 14 }} /> 白板
-        </button>
-        {!roomUrl && <span style={{ color: "#9ca3af", fontSize: "12px", display: "flex", alignItems: "center", gap: "4px" }}><Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />連線中...</span>}
-        <button onClick={() => setLeaveModal(true)} style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "4px", padding: "5px 10px", background: "#ef4444", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}>
+
+        <button
+          onClick={() => setLeaveModal(true)}
+          style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "4px", padding: "5px 10px", background: "#ef4444", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
+        >
           <PhoneOff style={{ width: 14, height: 14 }} /> 離開教室
         </button>
       </div>
 
-      {/* 白板工具列 */}
-      {tab === "whiteboard" && (
-        <div style={{ background: "#374151", padding: "4px 10px", display: "flex", alignItems: "center", gap: "6px", flexShrink: 0, overflowX: "auto" }}>
-          <button onClick={() => setWbTool("pen")} style={{ padding: "3px 8px", background: wbTool === "pen" ? "#3b82f6" : "#4b5563", color: "white", border: "none", borderRadius: "5px", cursor: "pointer", fontSize: "12px" }}>筆</button>
-          <button onClick={() => setWbTool("eraser")} style={{ padding: "3px 8px", background: wbTool === "eraser" ? "#3b82f6" : "#4b5563", color: "white", border: "none", borderRadius: "5px", cursor: "pointer", fontSize: "12px" }}>橡皮擦</button>
-          {COLORS.map((c) => (
-            <button key={c} onClick={() => { setColor(c); setWbTool("pen"); }}
-              style={{ width: 20, height: 20, borderRadius: "50%", background: c, border: color === c && wbTool === "pen" ? "3px solid #60a5fa" : "2px solid #6b7280", cursor: "pointer", padding: 0, flexShrink: 0 }} />
-          ))}
-          {SIZES.map((s) => (
-            <button key={s} onClick={() => setSize(s)} style={{ width: 28, height: 24, background: size === s ? "#3b82f6" : "#4b5563", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "11px", flexShrink: 0 }}>{s}</button>
-          ))}
-
-          {/* 頁面控制 */}
-          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
-            <button onClick={() => currentPage > 1 && switchPage(currentPage - 1)} disabled={currentPage <= 1}
-              style={{ padding: "3px 5px", background: "#4b5563", color: "white", border: "none", borderRadius: "5px", cursor: currentPage > 1 ? "pointer" : "not-allowed", opacity: currentPage <= 1 ? 0.4 : 1 }}>
-              <ChevronLeft style={{ width: 14, height: 14 }} />
-            </button>
-            <span style={{ color: "white", fontSize: "12px", minWidth: "50px", textAlign: "center" }}>第 {currentPage} / {totalPages} 頁</span>
-            <button onClick={() => currentPage < totalPages && switchPage(currentPage + 1)} disabled={currentPage >= totalPages}
-              style={{ padding: "3px 5px", background: "#4b5563", color: "white", border: "none", borderRadius: "5px", cursor: currentPage < totalPages ? "pointer" : "not-allowed", opacity: currentPage >= totalPages ? 0.4 : 1 }}>
-              <ChevronRight style={{ width: 14, height: 14 }} />
-            </button>
-            {isTeacher && (
-              <button onClick={addPage} style={{ display: "flex", alignItems: "center", gap: "2px", padding: "3px 8px", background: "#22c55e", color: "white", border: "none", borderRadius: "5px", cursor: "pointer", fontSize: "12px" }}>
-                <Plus style={{ width: 12, height: 12 }} /> 新增頁面
-              </button>
-            )}
-            <button onClick={clearCanvas} style={{ padding: "3px 8px", background: "#ef4444", color: "white", border: "none", borderRadius: "5px", cursor: "pointer", fontSize: "12px" }}>清除</button>
-          </div>
-        </div>
-      )}
-
-      {/* 內容區 */}
-      <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
+      {/* 視訊 */}
+      <div style={{ flex: 1, minHeight: 0 }}>
         {roomUrl && (
-          <iframe src={roomUrl} allow="camera; microphone; fullscreen; speaker; display-capture; autoplay"
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none", display: tab === "video" ? "block" : "none" }} />
+          <iframe
+            src={roomUrl}
+            allow="camera; microphone; fullscreen; speaker; display-capture; autoplay"
+            style={{ width: "100%", height: "100%", border: "none" }}
+          />
         )}
-        <div style={{ position: "absolute", inset: 0, background: "#f3f4f6", display: tab === "whiteboard" ? "block" : "none" }}>
-          <canvas ref={canvasRef}
-            style={{ display: "block", cursor: wbTool === "eraser" ? "cell" : "crosshair", touchAction: "none" }}
-            onMouseDown={startDraw} onMouseMove={draw} onMouseUp={stopDraw} onMouseLeave={stopDraw}
-            onTouchStart={startDraw} onTouchMove={draw} onTouchEnd={stopDraw} />
-        </div>
       </div>
 
       {/* Leave Modal */}
@@ -303,23 +101,38 @@ export default function RoomPage() {
               <>
                 <div style={{ fontSize: "44px", marginBottom: "10px" }}>📋</div>
                 <h3 style={{ fontSize: "20px", fontWeight: "bold", marginBottom: "8px" }}>課堂結束了嗎？</h3>
-                <p style={{ color: "#6b7280", fontSize: "13px", marginBottom: "20px", lineHeight: 1.6 }}>按「結束並標記完成」後，<br />學生即可為這堂課評價老師。</p>
+                <p style={{ color: "#6b7280", fontSize: "13px", marginBottom: "20px", lineHeight: 1.6 }}>
+                  按「結束並標記完成」後，<br />學生即可為這堂課評價老師。
+                </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <button onClick={handleComplete} disabled={completing} style={{ padding: "13px", background: "#22c55e", color: "white", fontWeight: "bold", fontSize: "15px", border: "none", borderRadius: "12px", cursor: "pointer" }}>
+                  <button onClick={handleComplete} disabled={completing}
+                    style={{ padding: "13px", background: "#22c55e", color: "white", fontWeight: "bold", fontSize: "15px", border: "none", borderRadius: "12px", cursor: "pointer" }}>
                     {completing ? "處理中..." : "✅ 結束課程並標記完成"}
                   </button>
-                  <button onClick={() => router.push("/dashboard")} style={{ padding: "11px", background: "#f3f4f6", color: "#374151", fontSize: "13px", border: "none", borderRadius: "12px", cursor: "pointer" }}>直接離開（不標記完成）</button>
-                  <button onClick={() => setLeaveModal(false)} style={{ padding: "8px", background: "transparent", color: "#9ca3af", fontSize: "12px", border: "none", cursor: "pointer" }}>取消，繼續上課</button>
+                  <button onClick={() => router.push("/dashboard")}
+                    style={{ padding: "11px", background: "#f3f4f6", color: "#374151", fontSize: "13px", border: "none", borderRadius: "12px", cursor: "pointer" }}>
+                    直接離開（不標記完成）
+                  </button>
+                  <button onClick={() => setLeaveModal(false)}
+                    style={{ padding: "8px", background: "transparent", color: "#9ca3af", fontSize: "12px", border: "none", cursor: "pointer" }}>
+                    取消，繼續上課
+                  </button>
                 </div>
               </>
             ) : (
               <>
                 <div style={{ fontSize: "44px", marginBottom: "10px" }}>👋</div>
                 <h3 style={{ fontSize: "20px", fontWeight: "bold", marginBottom: "8px" }}>要離開教室嗎？</h3>
-                <p style={{ color: "#6b7280", fontSize: "13px", marginBottom: "20px" }}>課程結束後可在控制台查看白板筆記。</p>
+                <p style={{ color: "#6b7280", fontSize: "13px", marginBottom: "20px" }}>課程結束後可在控制台評價老師。</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <button onClick={() => router.push("/dashboard")} style={{ padding: "13px", background: "#ef4444", color: "white", fontWeight: "bold", fontSize: "15px", border: "none", borderRadius: "12px", cursor: "pointer" }}>離開教室</button>
-                  <button onClick={() => setLeaveModal(false)} style={{ padding: "8px", background: "transparent", color: "#9ca3af", fontSize: "12px", border: "none", cursor: "pointer" }}>取消，繼續上課</button>
+                  <button onClick={() => router.push("/dashboard")}
+                    style={{ padding: "13px", background: "#ef4444", color: "white", fontWeight: "bold", fontSize: "15px", border: "none", borderRadius: "12px", cursor: "pointer" }}>
+                    離開教室
+                  </button>
+                  <button onClick={() => setLeaveModal(false)}
+                    style={{ padding: "8px", background: "transparent", color: "#9ca3af", fontSize: "12px", border: "none", cursor: "pointer" }}>
+                    取消，繼續上課
+                  </button>
                 </div>
               </>
             )}
