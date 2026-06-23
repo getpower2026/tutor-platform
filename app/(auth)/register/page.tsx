@@ -12,6 +12,7 @@ type FormData = {
   email: string;
   password: string;
   role: "STUDENT" | "TEACHER";
+  phone: string;
 };
 
 function RegisterForm() {
@@ -95,6 +96,19 @@ function RegisterForm() {
               placeholder="至少 8 個字元"
             />
             {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">聯絡手機</label>
+            <input
+              {...register("phone", { required: "請填寫聯絡手機" })}
+              type="tel"
+              className="input"
+              placeholder="0912-345-678"
+            />
+            {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
+            {role === "STUDENT" && (
+              <p className="text-gray-400 text-xs mt-1">方便老師在需要時與您聯繫。</p>
+            )}
           </div>
           <button type="submit" disabled={loading} className="btn-primary w-full">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "建立帳號"}

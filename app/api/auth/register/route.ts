@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
-  const { name, email, password, role } = await req.json();
+  const { name, email, password, role, phone } = await req.json();
 
   if (!name || !email || !password) {
     return NextResponse.json({ message: "請填寫所有欄位" }, { status: 400 });
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
   const hashed = await bcrypt.hash(password, 12);
   const user = await prisma.user.create({
-    data: { name, email, password: hashed, role: role ?? "STUDENT" },
+    data: { name, email, password: hashed, role: role ?? "STUDENT", phone: phone || null },
   });
 
   if (role === "TEACHER") {
