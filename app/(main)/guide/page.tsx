@@ -5,7 +5,35 @@ import { Navbar } from "@/components/layout/Navbar";
 import Link from "next/link";
 import { UserCheck, Search, CalendarCheck, Video, BookOpen, Phone, CheckCircle, ChevronRight, Monitor, Tablet, PenLine, Wifi, Eye } from "lucide-react";
 
-const TEACHER_STEPS = [
+function PencilToolHint() {
+  const tools = ["🔒", "✋", "↖", "▭", "◇", "○", "→", "—", "✏️", "A", "🖼", "⬜", "△"];
+  return (
+    <div style={{ marginTop: "14px", background: "#fdf4ff", border: "1px solid #e9d5ff", borderRadius: "12px", padding: "12px 14px" }}>
+      <p style={{ fontSize: "12px", color: "#7c3aed", fontWeight: "bold", marginBottom: "8px" }}>▼ Excalidraw 工具列 — 請點第 7 個「畫筆」（紅框）</p>
+      <div style={{ display: "flex", gap: "2px", flexWrap: "wrap", alignItems: "center" }}>
+        {tools.map((t, i) => (
+          <div key={i} style={{
+            width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center",
+            borderRadius: "6px", fontSize: "15px",
+            background: i === 8 ? "#fff0f0" : "#f9fafb",
+            border: i === 8 ? "2px solid #ef4444" : "1px solid #e5e7eb",
+            boxShadow: i === 8 ? "0 0 0 2px #fca5a5" : "none",
+            fontWeight: i === 8 ? "bold" : "normal",
+            position: "relative",
+          }}>
+            {t}
+            {i === 8 && (
+              <span style={{ position: "absolute", top: -18, left: "50%", transform: "translateX(-50%)", fontSize: "10px", color: "#ef4444", fontWeight: "bold", whiteSpace: "nowrap" }}>← 點這個</span>
+            )}
+          </div>
+        ))}
+      </div>
+      <p style={{ fontSize: "11px", color: "#9ca3af", marginTop: "8px" }}>點一下畫筆後，在白板上劃一次，白板就會正常顯示</p>
+    </div>
+  );
+}
+
+const TEACHER_STEPS: Array<{ icon: any; step: string; title: string; color: string; items: string[]; showPencilHint?: boolean }> = [
   {
     icon: UserCheck,
     step: "第一步",
@@ -74,16 +102,17 @@ const TEACHER_STEPS = [
   {
     icon: PenLine,
     step: "教學方法②",
-    title: "平台內建白板教學（免安裝）",
+    title: "白板教學（彈出視窗，視訊不中斷）",
     color: "bg-violet-50 text-violet-600",
     items: [
-      "進入視訊教室後，上方點「白板」切換頁籤（與視訊並列）",
-      "白板為平台內建功能，老師與學生不需下載任何 App",
-      "可用滑鼠在白板上書寫、畫圖、標示重點",
-      "支援多種顏色、線條粗細、橡皮擦、文字輸入",
-      "老師和學生雙方都可以在同一個白板上即時共同書寫",
+      "進入視訊教室後，上方點「開啟白板」紫色按鈕",
+      "白板會在新的彈出視窗開啟，視訊畫面不會中斷",
+      "老師和學生都點「開啟白板」後，會自動進入同一個共用白板",
+      "⚠️ 第一次進入白板，畫面可能顯示空白或歡迎畫面 — 請先點一下工具列第 7 個「畫筆工具」，白板就會正常顯示",
+      "可用滑鼠或觸控筆在白板上書寫、畫圖、標示重點",
+      "支援多種顏色、線條粗細、橡皮擦、文字輸入、幾何圖形",
       "適合：數學解題步驟、化學方程式、圖形說明、英文文法板書",
-      "💡 若使用 iPad + Apple Pencil，可直接在白板上手寫，效果最佳",
+      "💡 若使用 iPad + Apple Pencil，搭配畫筆工具手寫效果最佳",
     ],
   },
   {
@@ -106,13 +135,13 @@ const TEACHER_STEPS = [
     color: "bg-teal-50 text-teal-600",
     items: [
       "📋 白板是老師與學生「共用同一個白板」，雙方都能即時看到對方書寫的內容",
-      "老師步驟：進入教室 → 點上方「白板」頁籤 → 用滑鼠或觸控筆在白板上書寫",
-      "學生步驟：進入教室 → 點上方「白板」頁籤 → 即可即時看到老師書寫的內容",
-      "⚠️ 老師和學生必須都切換到「白板」頁籤，才能同時看到白板內容",
-      "⚠️ 如果學生停留在「視訊上課」頁籤，將看不到白板內容，請提醒學生切換頁籤",
+      "老師步驟：進入教室 → 點上方「開啟白板」紫色按鈕 → 白板在彈出視窗開啟",
+      "學生步驟：進入教室 → 點上方「開啟白板」紫色按鈕 → 自動進入同一個白板",
+      "⚠️ 第一次進入白板，畫面可能顯示空白 — 請點一下工具列第 7 個畫筆，就會正常顯示（見下圖紅框）",
       "老師可用橡皮擦清除，也可更換顏色、線條粗細",
       "學生也可以在白板上書寫，適合讓學生在白板上做練習題",
     ],
+    showPencilHint: true,
   },
   {
     icon: Tablet,
@@ -145,7 +174,7 @@ const TEACHER_STEPS = [
   },
 ];
 
-const STUDENT_STEPS = [
+const STUDENT_STEPS: Array<{ icon: any; step: string; title: string; color: string; items: string[]; showPencilHint?: boolean }> = [
   {
     icon: UserCheck,
     step: "第一步",
@@ -289,6 +318,7 @@ export default function GuidePage() {
                   </li>
                 ))}
               </ul>
+              {(steps[idx] as any).showPencilHint && <PencilToolHint />}
             </div>
           ))}
         </div>
