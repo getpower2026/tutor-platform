@@ -20,6 +20,9 @@ export function Navbar() {
             <Link href="/teachers" className="text-gray-600 hover:text-gray-900 font-medium text-xs sm:text-base">
               尋找老師
             </Link>
+            <Link href="/guide" className="text-gray-600 hover:text-gray-900 font-medium text-xs sm:text-base">
+              上課說明
+            </Link>
 
             {session ? (
               <div className="flex items-center gap-2 sm:gap-3">
