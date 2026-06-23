@@ -281,10 +281,11 @@ export default function DashboardPage() {
                       {/* 查看白板各頁 */}
                       {booking.status === "COMPLETED" && (
                         <div className="flex items-center gap-1 flex-wrap">
-                          {[1,2,3,4,5].map((p) => {
-                            const base = booking.id.replace(/-/g,"") + `p${p}`;
-                            const roomId = base.slice(0,20).padEnd(20,"0");
-                            const key = btoa(base).replace(/[^a-zA-Z0-9]/g,"").slice(0,22).padEnd(22,"A");
+                          {Array.from({ length: 50 }, (_, i) => i + 1).map((p) => {
+                            const cleaned = booking.id.replace(/-/g,"").slice(0,17);
+                            const pageStr = String(p).padStart(2,"0");
+                            const roomId = (cleaned + pageStr + "0").slice(0,20);
+                            const key = btoa(booking.id + p).replace(/[^a-zA-Z0-9]/g,"").slice(0,22).padEnd(22,"A");
                             const url = `https://excalidraw.com/#room=${roomId},${key}`;
                             return (
                               <a key={p} href={url} target="_blank" rel="noopener noreferrer"

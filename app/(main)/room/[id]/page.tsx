@@ -5,12 +5,15 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Loader2, PhoneOff, PenLine } from "lucide-react";
 
-const PAGES = [1, 2, 3, 4, 5];
+const TOTAL_PAGES = 50;
 
 function getExcalidrawUrl(bookingId: string, page: number) {
-  const base = bookingId.replace(/-/g, "") + `p${page}`;
-  const roomId = base.slice(0, 20).padEnd(20, "0");
-  const key = btoa(base).replace(/[^a-zA-Z0-9]/g, "").slice(0, 22).padEnd(22, "A");
+  // Use first 17 chars of cleaned ID + 2-digit page suffix = 19 chars, pad to 20
+  const cleaned = bookingId.replace(/-/g, "").slice(0, 17);
+  const pageStr = String(page).padStart(2, "0");
+  const roomId = (cleaned + pageStr + "0").slice(0, 20);
+  // Key: btoa of full bookingId+page for uniqueness
+  const key = btoa(bookingId + page).replace(/[^a-zA-Z0-9]/g, "").slice(0, 22).padEnd(22, "A");
   return `https://excalidraw.com/#room=${roomId},${key}`;
 }
 
@@ -80,10 +83,10 @@ export default function RoomPage() {
             <PenLine style={{ width: 14, height: 14 }} /> 白板 ▾
           </button>
           {showPages && (
-            <div style={{ position: "absolute", top: "110%", left: 0, background: "#1f2937", border: "1px solid #374151", borderRadius: "8px", padding: "6px", zIndex: 100, display: "flex", flexDirection: "column", gap: "4px", minWidth: "130px" }}>
-              {PAGES.map((p) => (
+            <div style={{ position: "absolute", top: "110%", left: 0, background: "#1f2937", border: "1px solid #374151", borderRadius: "8px", padding: "6px", zIndex: 100, display: "flex", flexDirection: "column", gap: "2px", minWidth: "130px", maxHeight: "320px", overflowY: "auto" }}>
+              {Array.from({ length: TOTAL_PAGES }, (_, i) => i + 1).map((p) => (
                 <button key={p} onClick={() => openPage(p)}
-                  style={{ display: "flex", alignItems: "center", gap: "6px", padding: "7px 12px", background: "transparent", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", textAlign: "left" }}
+                  style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 12px", background: "transparent", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", textAlign: "left", whiteSpace: "nowrap" }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = "#374151")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
