@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import Link from "next/link";
-import { UserCheck, Search, CalendarCheck, Video, BookOpen, Phone, CheckCircle, ChevronRight, Monitor, Tablet, PenLine, Wifi } from "lucide-react";
+import { UserCheck, Search, CalendarCheck, Video, BookOpen, Phone, CheckCircle, ChevronRight, Monitor, Tablet, PenLine, Wifi, Eye } from "lucide-react";
 
 const TEACHER_STEPS = [
   {
@@ -100,6 +100,36 @@ const TEACHER_STEPS = [
     ],
   },
   {
+    icon: Eye,
+    step: "白板操作說明",
+    title: "白板：老師寫、學生看得見嗎？",
+    color: "bg-teal-50 text-teal-600",
+    items: [
+      "📋 白板是老師與學生「共用同一個白板」，雙方都能即時看到對方書寫的內容",
+      "老師步驟：進入教室 → 點上方「白板」頁籤 → 用滑鼠或觸控筆在白板上書寫",
+      "學生步驟：進入教室 → 點上方「白板」頁籤 → 即可即時看到老師書寫的內容",
+      "⚠️ 老師和學生必須都切換到「白板」頁籤，才能同時看到白板內容",
+      "⚠️ 如果學生停留在「視訊上課」頁籤，將看不到白板內容，請提醒學生切換頁籤",
+      "老師可用橡皮擦清除，也可更換顏色、線條粗細",
+      "學生也可以在白板上書寫，適合讓學生在白板上做練習題",
+    ],
+  },
+  {
+    icon: Tablet,
+    step: "iPad 使用說明",
+    title: "iPad / 平板進入教室",
+    color: "bg-rose-50 text-rose-600",
+    items: [
+      "iPad 使用 Safari 或 Chrome 瀏覽器直接開啟 tutorlink.cc，不需下載任何 App",
+      "登入後至「控制台」→ 點「進入教室」即可",
+      "⚠️ 進入教室時，瀏覽器會詢問是否允許使用「攝影機」和「麥克風」，請點「允許」",
+      "搭配 Apple Pencil 或觸控筆，切換到「白板」頁籤即可手寫板書，效果最接近實體黑板",
+      "💡 iPad 白板手寫建議：使用 Apple Pencil 時，在白板上用筆尖書寫即可，無需切換任何模式",
+      "如果 Safari 無法使用攝影機，請前往 iPad「設定」→「Safari」→「攝影機」→ 設為「允許」",
+      "建議老師用 iPad 手寫白板，同時學生用電腦觀看，搭配效果最佳",
+    ],
+  },
+  {
     icon: Wifi,
     step: "注意事項",
     title: "上課前環境準備",
@@ -176,6 +206,33 @@ const STUDENT_STEPS = [
       "點「進入教室」按鈕",
       "允許瀏覽器使用攝影機與麥克風",
       "等待老師進入同一個房間即可開始上課",
+    ],
+  },
+  {
+    icon: Eye,
+    step: "白板操作說明",
+    title: "怎麼看老師的白板內容？",
+    color: "bg-teal-50 text-teal-600",
+    items: [
+      "進入教室後，上方有兩個頁籤：「視訊上課」和「白板」",
+      "當老師在白板上書寫時，請點上方「白板」頁籤切換過去",
+      "⚠️ 停留在「視訊上課」頁籤時，看不到白板內容，一定要切換到「白板」才能看到",
+      "白板是共用的，學生也可以在白板上書寫，老師同樣能即時看到",
+      "如果老師說「看白板」，請記得切換到白板頁籤",
+    ],
+  },
+  {
+    icon: Tablet,
+    step: "iPad 使用說明",
+    title: "用 iPad 或手機上課",
+    color: "bg-rose-50 text-rose-600",
+    items: [
+      "用 iPad 或手機的 Safari / Chrome 瀏覽器開啟 tutorlink.cc，不需下載 App",
+      "登入後至「控制台」→ 點「進入教室」",
+      "⚠️ 瀏覽器會詢問是否允許「攝影機」和「麥克風」，請務必點「允許」",
+      "如果 Safari 無法使用攝影機，請前往「設定」→「Safari」→「攝影機」→ 設為「允許」",
+      "手機畫面較小，建議橫放使用，或改用平板、電腦效果更佳",
+      "💡 建議使用 Wi-Fi 連線，行動數據容易造成畫面延遲或斷線",
     ],
   },
 ];
