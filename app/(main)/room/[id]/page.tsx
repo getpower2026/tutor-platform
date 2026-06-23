@@ -10,7 +10,9 @@ export default function RoomPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const [roomUrl, setRoomUrl] = useState("");
+  const [whiteboardUrl, setWhiteboardUrl] = useState("");
   const [error, setError] = useState("");
+  const [tab, setTab] = useState<"video" | "whiteboard">("video");
 
   useEffect(() => {
     if (!session) return;
@@ -18,9 +20,19 @@ export default function RoomPage() {
       .then((r) => r.json())
       .then((d) => {
         if (d.message) { setError(d.message); return; }
-        // Daily.co prebuilt UI via plain URL — token 帶入 query string
         setRoomUrl(`https://${process.env.NEXT_PUBLIC_DAILY_DOMAIN}/${d.roomName}?t=${d.token}`);
       });
+
+    // 用 SHA-256 產生合法的 Excalidraw 協作 URL
+    async function buildWhiteboardUrl() {
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(id as string));
+      const bytes = new Uint8Array(buf);
+      const roomId = Array.from(bytes.slice(0, 10)).map(b => b.toString(16).padStart(2, "0")).join("");
+      const roomKey = btoa(String.fromCharCode(...bytes.slice(10, 26)))
+        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+      setWhiteboardUrl(`https://excalidraw.com/#room=${roomId},${roomKey}`);
+    }
+    buildWhiteboardUrl();
   }, [id, session]);
 
   if (error) return (
@@ -34,6 +46,7 @@ export default function RoomPage() {
 
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#111" }}>
+      {/* Header */}
       <div style={{ background: "#1f2937", padding: "8px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
         <span style={{ color: "white", fontWeight: "bold" }}>TutorLink 視訊教室</span>
         {!roomUrl && (
@@ -43,13 +56,45 @@ export default function RoomPage() {
           </span>
         )}
       </div>
-      {roomUrl && (
-        <iframe
-          src={roomUrl}
-          allow="camera; microphone; fullscreen; speaker; display-capture; autoplay"
-          style={{ flex: 1, border: "none", width: "100%", minHeight: 0 }}
-        />
-      )}
+
+      {/* Tabs */}
+      <div style={{ background: "#374151", display: "flex", flexShrink: 0 }}>
+        {(["video", "whiteboard"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            style={{
+              padding: "8px 24px",
+              fontSize: "14px",
+              fontWeight: 500,
+              color: tab === t ? "white" : "#9ca3af",
+              background: tab === t ? "#111827" : "transparent",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            {t === "video" ? "📹 視訊上課" : "✏️ 白板"}
+          </button>
+        ))}
+      </div>
+
+      {/* Content — 兩個 iframe 都常駐，用 display 切換 */}
+      <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
+        {roomUrl && (
+          <iframe
+            src={roomUrl}
+            allow="camera; microphone; fullscreen; speaker; display-capture; autoplay"
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none", display: tab === "video" ? "block" : "none" }}
+          />
+        )}
+        {whiteboardUrl && (
+          <iframe
+            src={whiteboardUrl}
+            allow="clipboard-read; clipboard-write"
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none", display: tab === "whiteboard" ? "block" : "none" }}
+          />
+        )}
+      </div>
     </div>
   );
 }
