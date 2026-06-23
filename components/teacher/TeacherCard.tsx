@@ -34,7 +34,7 @@ export function TeacherCard({ teacher }: Props) {
               }}
             />
           ) : (
-            <span className="text-3xl font-bold text-primary-600">{teacher.user.name[0]}</span>
+            <span className="text-sm font-bold text-primary-400">未上傳</span>
           )}
         </div>
         <div className="flex-1 min-w-0">
