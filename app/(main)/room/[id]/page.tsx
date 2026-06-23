@@ -155,15 +155,18 @@ export default function RoomPage() {
         </div>
 
         {/* Whiteboard — always mounted once session ready */}
-        <div style={{ position: "absolute", inset: 0, display: tab === "whiteboard" ? "block" : "none" }}>
+        <div style={{ position: "absolute", inset: 0, display: tab === "whiteboard" ? "block" : "none", background: "#fff" }}>
           {session && (
-            <Excalidraw
-              excalidrawAPI={(api) => { excalidrawApiRef.current = api; }}
-              onChange={handleExcalidrawChange}
-              UIOptions={{
-                canvasActions: { export: false, loadScene: false, saveAsImage: true, saveToActiveFile: false },
-              }}
-            />
+            <div style={{ width: "100%", height: "100%", isolation: "isolate" }}>
+              <Excalidraw
+                theme="light"
+                excalidrawAPI={(api) => { excalidrawApiRef.current = api; }}
+                onChange={handleExcalidrawChange}
+                UIOptions={{
+                  canvasActions: { export: false, loadScene: false, saveAsImage: true, saveToActiveFile: false },
+                }}
+              />
+            </div>
           )}
         </div>
       </div>
