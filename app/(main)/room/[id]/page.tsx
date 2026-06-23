@@ -220,27 +220,32 @@ function ParticipantTile({ participant }: { participant: any }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const videoTrack = participant.tracks?.video?.persistentTrack;
-  const audioTrack = participant.tracks?.audio?.persistentTrack;
+  const videoTrack = participant.tracks?.video?.persistentTrack ?? participant.tracks?.video?.track;
+  const audioTrack = participant.tracks?.audio?.persistentTrack ?? participant.tracks?.audio?.track;
   const videoState = participant.tracks?.video?.state;
+  const isVideoPlayable = videoState === "playable" && !!videoTrack;
 
   useEffect(() => {
-    if (videoRef.current && videoTrack) {
-      const stream = new MediaStream([videoTrack]);
-      videoRef.current.srcObject = stream;
-    } else if (videoRef.current) {
-      videoRef.current.srcObject = null;
+    if (videoRef.current) {
+      if (isVideoPlayable && videoTrack) {
+        const stream = new MediaStream([videoTrack]);
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(() => {});
+      } else {
+        videoRef.current.srcObject = null;
+      }
     }
-  }, [videoTrack]);
+  }, [videoTrack, isVideoPlayable]);
 
   useEffect(() => {
     if (audioRef.current && !participant.local && audioTrack) {
       const stream = new MediaStream([audioTrack]);
       audioRef.current.srcObject = stream;
+      audioRef.current.play().catch(() => {});
     }
   }, [audioTrack, participant.local]);
 
-  const isVideoOff = !videoTrack || videoState === "off" || videoState === "blocked";
+  const isVideoOff = !isVideoPlayable;
 
   return (
     <div className="relative bg-gray-700 rounded-xl overflow-hidden flex items-center justify-center">
