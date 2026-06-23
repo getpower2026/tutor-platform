@@ -118,6 +118,9 @@ export default function TeacherProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
+      <div className="bg-red-600 text-white py-4 px-4 text-center font-bold text-base">
+        ⚠️ 填寫完畢後，請務必按下最下方「儲存個人檔案」按鈕，資料才會生效！
+      </div>
       <div className="max-w-2xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6">編輯個人檔案</h1>
 
