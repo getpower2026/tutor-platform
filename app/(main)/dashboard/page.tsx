@@ -153,6 +153,11 @@ export default function DashboardPage() {
                       {booking.note && (
                         <div className="text-xs text-gray-400 mt-1">備註：{booking.note}</div>
                       )}
+                      {!isTeacher && booking.status === "CONFIRMED" && booking.teacher?.teacherProfile?.phone && (
+                        <div className="text-sm text-green-700 bg-green-50 rounded px-2 py-1 mt-1 font-medium">
+                          📞 老師電話：{booking.teacher.teacherProfile.phone}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       {/* 老師看到待確認時顯示接受/拒絕 */}

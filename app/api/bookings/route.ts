@@ -18,7 +18,12 @@ export async function GET() {
       : { studentId: session.user.id },
     include: {
       student: { select: { name: true, image: true } },
-      teacher: { select: { name: true, image: true } },
+      teacher: {
+        select: {
+          name: true, image: true,
+          teacherProfile: { select: { phone: true, photoUrl: true } },
+        },
+      },
     },
     orderBy: { startTime: "desc" },
   });
