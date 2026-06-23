@@ -7,7 +7,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { useForm } from "react-hook-form";
 import { Loader2, Save, Camera } from "lucide-react";
 
-const SUBJECTS = ["數學", "英文", "物理", "化學", "中文", "日文", "程式設計", "音樂", "美術", "歷史", "地理", "生物"];
+const SUBJECTS = ["國文", "英文", "數學", "社會", "歷史", "地理", "公民", "自然", "物理", "化學", "生物", "地科", "理化", "全民英檢", "多益", "劍橋英檢"];
 const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 const DAY_LABELS: Record<string, string> = {
   monday: "週一", tuesday: "週二", wednesday: "週三", thursday: "週四",
