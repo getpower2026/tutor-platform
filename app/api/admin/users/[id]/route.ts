@@ -16,7 +16,13 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
 
   try {
-    // 刪除相關資料再刪使用者
+    // 先刪 Review（依附在 Booking 上）
+    const bookings = await prisma.booking.findMany({
+      where: { OR: [{ studentId: id }, { teacherId: id }] },
+      select: { id: true },
+    });
+    const bookingIds = bookings.map((b) => b.id);
+    await prisma.review.deleteMany({ where: { OR: [{ bookingId: { in: bookingIds } }, { reviewerId: id }, { teacherId: id }] } });
     await prisma.booking.deleteMany({ where: { OR: [{ studentId: id }, { teacherId: id }] } });
     await prisma.teacherProfile.deleteMany({ where: { userId: id } });
     await prisma.user.delete({ where: { id } });
