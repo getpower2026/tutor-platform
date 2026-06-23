@@ -20,7 +20,7 @@ export function BookingModal({ teacher, onClose }: Props) {
   const [error, setError] = useState("");
 
   const totalAmount = teacher.hourlyRate * duration;
-  const platformFee = Math.round(totalAmount * 0.05);
+  const platformFee = 0;
 
   const handleSubmit = async () => {
     if (!date || !startTime) { setError("請選擇日期與時間"); return; }
@@ -105,7 +105,7 @@ export function BookingModal({ teacher, onClose }: Props) {
 
           <div className="bg-gray-50 rounded-lg p-4 text-sm space-y-2">
             <div className="flex justify-between"><span className="text-gray-500">課程費用</span><span>{formatNTD(totalAmount)}</span></div>
-            <div className="flex justify-between"><span className="text-gray-500">平台手續費 (5%)</span><span>{formatNTD(platformFee)}</span></div>
+            <div className="flex justify-between"><span className="text-green-600 font-medium">平台手續費</span><span className="text-green-600 font-medium">免費</span></div>
             <div className="flex justify-between font-bold border-t pt-2">
               <span>總計</span><span className="text-primary-600">{formatNTD(totalAmount + platformFee)}</span>
             </div>
