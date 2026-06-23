@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import Link from "next/link";
-import { UserCheck, Search, CalendarCheck, Video, BookOpen, Phone, CheckCircle, ChevronRight } from "lucide-react";
+import { UserCheck, Search, CalendarCheck, Video, BookOpen, Phone, CheckCircle, ChevronRight, Monitor, Tablet, PenLine, Wifi } from "lucide-react";
 
 const TEACHER_STEPS = [
   {
@@ -56,7 +56,59 @@ const TEACHER_STEPS = [
       "上課時間到，點「進入教室」",
       "允許瀏覽器使用攝影機與麥克風",
       "等待學生進入同一個房間即可開始上課",
-      "教室內支援視訊、螢幕分享、虛擬白板",
+    ],
+  },
+  {
+    icon: Monitor,
+    step: "教學方法①",
+    title: "電腦螢幕分享教學（最常用）",
+    color: "bg-sky-50 text-sky-600",
+    items: [
+      "進入教室後，點下方工具列「分享螢幕」按鈕",
+      "選擇要分享的視窗（例如 Word、PPT、瀏覽器、YouTube 影片）",
+      "學生即可即時看到您的螢幕畫面",
+      "適合：講義說明、題目解析、看影片、瀏覽網頁教學",
+      "建議搭配麥克風同步說明，效果最佳",
+    ],
+  },
+  {
+    icon: PenLine,
+    step: "教學方法②",
+    title: "虛擬白板教學",
+    color: "bg-violet-50 text-violet-600",
+    items: [
+      "進入教室後，點下方工具列「白板」按鈕",
+      "可用滑鼠或觸控筆在白板上書寫、畫圖、標示",
+      "支援文字輸入、顏色選擇、橡皮擦功能",
+      "適合：數學解題、化學方程式、圖形說明、英文文法板書",
+      "老師和學生都可以在白板上共同書寫",
+    ],
+  },
+  {
+    icon: Tablet,
+    step: "教學方法③",
+    title: "iPad / 平板搭配手寫筆教學（推薦）",
+    color: "bg-rose-50 text-rose-600",
+    items: [
+      "使用 iPad 或 Android 平板開啟瀏覽器，進入視訊教室",
+      "搭配 Apple Pencil 或觸控筆，在虛擬白板上手寫板書",
+      "書寫效果最接近實體黑板，學生體驗最佳",
+      "也可用 iPad 分享螢幕，搭配 GoodNotes、Notability 等 App 教學",
+      "⚠️ 建議使用 Safari 或 Chrome 瀏覽器開啟教室，效果最穩定",
+    ],
+  },
+  {
+    icon: Wifi,
+    step: "注意事項",
+    title: "上課前環境準備",
+    color: "bg-gray-50 text-gray-600",
+    items: [
+      "確認網路穩定，建議使用 Wi-Fi，避免行動數據（易斷線）",
+      "使用 Chrome 或 Safari 最新版本瀏覽器",
+      "上課前測試攝影機與麥克風是否正常",
+      "建議使用耳機，避免回音干擾",
+      "準備好教材（PDF、圖片、題目）方便螢幕分享",
+      "⚠️ 如遇視訊問題，請重新整理頁面或重新進入教室",
     ],
   },
 ];
