@@ -57,6 +57,8 @@ model TeacherProfile {
   reviewCount Int      @default(0)
   isVerified  Boolean  @default(false)
   availability Json    // { monday: [{start: "09:00", end: "12:00"}], ... }
+  phone       String?
+  photoUrl    String?
   stripeAccountId String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

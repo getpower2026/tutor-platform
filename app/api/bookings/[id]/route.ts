@@ -14,7 +14,12 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     where: { id },
     include: {
       student: { select: { id: true, name: true, image: true } },
-      teacher: { select: { id: true, name: true, image: true } },
+      teacher: {
+        select: {
+          id: true, name: true, image: true,
+          teacherProfile: { select: { phone: true, photoUrl: true } },
+        },
+      },
     },
   });
 

@@ -13,6 +13,7 @@ interface Props {
     experience: number;
     rating: number;
     reviewCount: number;
+    photoUrl?: string | null;
     user: { id: string; name: string; image: string | null };
   };
 }
@@ -22,8 +23,8 @@ export function TeacherCard({ teacher }: Props) {
     <Link href={`/teachers/${teacher.userId}`} className="card p-6 hover:shadow-md transition-shadow block">
       <div className="flex items-start gap-4 mb-4">
         <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
-          {teacher.user.image ? (
-            <Image src={teacher.user.image} alt={teacher.user.name} width={64} height={64} className="rounded-full object-cover" />
+          {(teacher.photoUrl || teacher.user.image) ? (
+            <Image src={teacher.photoUrl || teacher.user.image!} alt={teacher.user.name} width={64} height={64} className="rounded-full object-cover" unoptimized />
           ) : (
             <span className="text-2xl font-bold text-primary-600">{teacher.user.name[0]}</span>
           )}

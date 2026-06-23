@@ -36,6 +36,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       education: data.education,
       languages: data.languages,
       availability: data.availability,
+      phone: data.phone,
+      photoUrl: data.photoUrl,
     },
   });
 

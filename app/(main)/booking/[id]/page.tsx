@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
-import { CheckCircle, Clock, Calendar, Video, Loader2 } from "lucide-react";
+import { CheckCircle, Clock, Calendar, Video, Loader2, Phone } from "lucide-react";
 import { formatDateTime, formatNTD } from "@/lib/utils";
 
 export default function BookingConfirmPage() {
@@ -59,6 +59,14 @@ export default function BookingConfirmPage() {
               <span className="text-gray-500">費用</span>
               <span className="font-medium">{booking && formatNTD(booking.totalAmount)}</span>
             </div>
+            {isPaid && booking?.teacher?.teacherProfile?.phone && (
+              <div className="flex justify-between text-sm border-t pt-3 mt-1">
+                <span className="flex items-center gap-1 text-gray-500"><Phone className="w-4 h-4" /> 老師手機</span>
+                <a href={`tel:${booking.teacher.teacherProfile.phone}`} className="font-medium text-primary-600 hover:underline">
+                  {booking.teacher.teacherProfile.phone}
+                </a>
+              </div>
+            )}
           </div>
 
           <div className="space-y-3">
