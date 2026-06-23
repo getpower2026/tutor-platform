@@ -20,6 +20,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -34,10 +35,22 @@ export default function DashboardPage() {
     }
   }, [session]);
 
+  const handleAction = async (bookingId: string, newStatus: "CONFIRMED" | "CANCELLED") => {
+    setActionLoading(bookingId + newStatus);
+    await fetch(`/api/bookings/${bookingId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    setBookings((prev) => prev.map((b) => b.id === bookingId ? { ...b, status: newStatus } : b));
+    setActionLoading(null);
+  };
+
   if (status === "loading" || !session) return null;
 
   const isTeacher = session.user.role === "TEACHER";
   const upcoming = bookings.filter((b) => b.status === "CONFIRMED" && new Date(b.startTime) > new Date());
+  const pending = bookings.filter((b) => b.status === "PENDING");
   const past = bookings.filter((b) => b.status === "COMPLETED");
 
   return (
@@ -66,8 +79,8 @@ export default function DashboardPage() {
         <div className="grid grid-cols-3 gap-4 mb-8">
           {[
             { label: "即將上課", value: upcoming.length, icon: Calendar, color: "text-blue-600 bg-blue-50" },
+            { label: "待確認預約", value: pending.length, icon: AlertCircle, color: "text-amber-600 bg-amber-50" },
             { label: "已完成課程", value: past.length, icon: CheckCircle, color: "text-green-600 bg-green-50" },
-            { label: "總課程數", value: bookings.length, icon: Clock, color: "text-purple-600 bg-purple-50" },
           ].map(({ label, value, icon: Icon, color }) => (
             <div key={label} className="card p-4 flex items-center gap-4">
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color}`}>
@@ -101,8 +114,7 @@ export default function DashboardPage() {
               {bookings.map((booking) => {
                 const st = STATUS_MAP[booking.status] ?? STATUS_MAP.PENDING;
                 const Icon = st.icon;
-                const isPaid = booking.paymentStatus === "PAID";
-                const canJoin = booking.status === "CONFIRMED" && isPaid;
+                const canJoin = booking.status === "CONFIRMED";
                 const otherPerson = isTeacher ? booking.student : booking.teacher;
 
                 return (
@@ -114,21 +126,39 @@ export default function DashboardPage() {
                           <Icon className="w-3 h-3" />
                           {st.label}
                         </span>
-                        {!isPaid && booking.status !== "CANCELLED" && (
-                          <span className="text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded-full">待付款</span>
-                        )}
                       </div>
                       <div className="text-sm text-gray-500 flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {formatDateTime(booking.startTime)}
                       </div>
+                      {booking.note && (
+                        <div className="text-xs text-gray-400 mt-1">備註：{booking.note}</div>
+                      )}
                     </div>
-                    <div className="text-right">
-                      <div className="font-medium text-gray-900">{formatNTD(booking.totalAmount)}</div>
+                    <div className="flex items-center gap-2">
+                      {/* 老師看到待確認時顯示接受/拒絕 */}
+                      {isTeacher && booking.status === "PENDING" && (
+                        <>
+                          <button
+                            onClick={() => handleAction(booking.id, "CONFIRMED")}
+                            disabled={!!actionLoading}
+                            className="px-3 py-1.5 bg-green-500 text-white text-sm rounded-lg hover:bg-green-600 font-medium"
+                          >
+                            接受
+                          </button>
+                          <button
+                            onClick={() => handleAction(booking.id, "CANCELLED")}
+                            disabled={!!actionLoading}
+                            className="px-3 py-1.5 bg-red-100 text-red-600 text-sm rounded-lg hover:bg-red-200 font-medium"
+                          >
+                            拒絕
+                          </button>
+                        </>
+                      )}
                       {canJoin && (
                         <Link
                           href={`/room/${booking.id}`}
-                          className="inline-flex items-center gap-1 text-sm text-primary-600 font-medium hover:underline mt-1"
+                          className="inline-flex items-center gap-1 text-sm text-primary-600 font-medium hover:underline"
                         >
                           <Video className="w-3 h-3" />
                           進入教室

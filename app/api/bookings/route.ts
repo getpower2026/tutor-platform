@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       endTime: new Date(endTime),
       totalAmount,
       platformFee: 0,
-      status: "CONFIRMED",
+      status: "PENDING",
       paymentStatus: "UNPAID",
       note,
     },

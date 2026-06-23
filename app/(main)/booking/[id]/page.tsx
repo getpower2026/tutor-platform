@@ -25,7 +25,8 @@ export default function BookingConfirmPage() {
     </div>
   );
 
-  const teacherPhone = booking?.teacher?.teacherProfile?.phone;
+  const isConfirmed = booking?.status === "CONFIRMED";
+  const teacherPhone = isConfirmed ? booking?.teacher?.teacherProfile?.phone : null;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -35,8 +36,8 @@ export default function BookingConfirmPage() {
           <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-10 h-10 text-green-600" />
           </div>
-          <h1 className="text-2xl font-bold mb-2">預約成功！</h1>
-          <p className="text-gray-500 mb-8">老師已收到通知，請等候老師與您聯繫確認上課細節。</p>
+          <h1 className="text-2xl font-bold mb-2">{isConfirmed ? "預約已確認！" : "預約申請已送出！"}</h1>
+          <p className="text-gray-500 mb-8">{isConfirmed ? "老師已接受預約，請查看以下聯絡資訊。" : "等候老師確認後，您將收到 Email 通知並可看到老師聯絡方式。"}</p>
 
           <div className="bg-gray-50 rounded-xl p-4 text-left space-y-3 mb-6">
             <div className="flex justify-between text-sm">
