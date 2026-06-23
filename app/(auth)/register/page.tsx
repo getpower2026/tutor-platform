@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { signIn } from "next-auth/react";
-import { BookOpen, Loader2 } from "lucide-react";
+import { BookOpen, Loader2, AlertTriangle } from "lucide-react";
 
 type FormData = {
   name: string;
@@ -26,8 +26,14 @@ function RegisterForm() {
   });
 
   const role = watch("role");
+  const [agreed, setAgreed] = useState(false);
+  const [showAgreeAlert, setShowAgreeAlert] = useState(false);
 
   const onSubmit = async (data: FormData) => {
+    if (!agreed) {
+      setShowAgreeAlert(true);
+      return;
+    }
     setLoading(true);
     setError("");
     const res = await fetch("/api/auth/register", {
@@ -110,6 +116,34 @@ function RegisterForm() {
             />
             {errors.phone && <p className="text-red-500 text-xs mt-1 font-medium">{errors.phone.message}</p>}
           </div>
+
+          {/* 免責聲明同意 */}
+          <div
+            onClick={() => { setAgreed(!agreed); setShowAgreeAlert(false); }}
+            className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors select-none ${
+              agreed ? "border-primary-500 bg-primary-50" : showAgreeAlert ? "border-red-500 bg-red-50" : "border-gray-200 hover:border-gray-300"
+            }`}
+          >
+            <div className={`w-5 h-5 rounded border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-colors ${
+              agreed ? "bg-primary-600 border-primary-600" : showAgreeAlert ? "border-red-500" : "border-gray-400"
+            }`}>
+              {agreed && <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+            </div>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              我已閱讀並同意{" "}
+              <a
+                href="/disclaimer"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="text-primary-600 font-bold underline hover:text-primary-700"
+              >
+                TutorLink 免責聲明
+              </a>
+              ，了解本平台僅提供媒合服務，不負任何課程、金流或人身安全責任。
+            </p>
+          </div>
+
           <button type="submit" disabled={loading} className="btn-primary w-full">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "建立帳號"}
           </button>
@@ -120,6 +154,37 @@ function RegisterForm() {
           <Link href="/login" className="text-primary-600 font-medium hover:underline">立即登入</Link>
         </p>
       </div>
+
+      {/* 未勾選警示 Modal */}
+      {showAgreeAlert && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-500" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">請先閱讀並同意免責聲明</h3>
+            <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+              您必須閱讀並勾選同意{" "}
+              <a href="/disclaimer" target="_blank" rel="noopener noreferrer" className="text-primary-600 underline font-medium">
+                TutorLink 免責聲明
+              </a>
+              {" "}後，才能完成註冊。
+            </p>
+            <button
+              onClick={() => { setShowAgreeAlert(false); setAgreed(true); }}
+              className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl mb-2"
+            >
+              ✅ 我同意免責聲明
+            </button>
+            <button
+              onClick={() => setShowAgreeAlert(false)}
+              className="w-full py-2 text-gray-400 text-sm hover:text-gray-600"
+            >
+              返回查看
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
