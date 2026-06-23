@@ -92,7 +92,7 @@ export default function TeacherProfilePage() {
     await fetch(`/api/teachers/${session!.user.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...data, subjects: selectedSubjects, availability: avail, languages: ["中文"], photoUrl }),
+      body: JSON.stringify({ ...data, subjects: selectedSubjects, availability: avail, languages: ["中文"], photoUrl: photoUrl?.startsWith("blob:") ? "" : photoUrl }),
     });
     setSaving(false);
     setSuccess(true);
@@ -233,7 +233,7 @@ export default function TeacherProfilePage() {
           </div>
 
           {success && <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg text-sm">✓ 儲存成功！</div>}
-          <button type="submit" disabled={saving} className="btn-primary w-full py-3 flex items-center justify-center gap-2">
+          <button type="submit" disabled={saving || uploading} className="btn-primary w-full py-3 flex items-center justify-center gap-2">
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             儲存個人檔案
           </button>
