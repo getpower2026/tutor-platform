@@ -45,8 +45,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     include: {
       student: { select: { name: true, email: true } },
       teacher: { select: { name: true } },
-      teacherProfile: false,
-    } as any,
+    },
   });
 
   if (!booking) return NextResponse.json({ message: "找不到預約" }, { status: 404 });
