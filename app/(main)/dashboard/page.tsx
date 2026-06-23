@@ -278,12 +278,22 @@ export default function DashboardPage() {
                           進入教室
                         </Link>
                       )}
-                      {/* 查看白板筆記 */}
+                      {/* 查看白板各頁 */}
                       {booking.status === "COMPLETED" && (
-                        <Link href={`/whiteboard/${booking.id}`}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 text-sm font-medium rounded-lg">
-                          📓 白板筆記
-                        </Link>
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {[1,2,3,4,5].map((p) => {
+                            const base = booking.id.replace(/-/g,"") + `p${p}`;
+                            const roomId = base.slice(0,20).padEnd(20,"0");
+                            const key = btoa(base).replace(/[^a-zA-Z0-9]/g,"").slice(0,22).padEnd(22,"A");
+                            const url = `https://excalidraw.com/#room=${roomId},${key}`;
+                            return (
+                              <a key={p} href={url} target="_blank" rel="noopener noreferrer"
+                                className="inline-flex items-center px-2 py-1 bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs font-medium rounded-lg">
+                                📄 第{p}頁
+                              </a>
+                            );
+                          })}
+                        </div>
                       )}
                       {/* 學生評價按鈕 */}
                       {canReview && (
