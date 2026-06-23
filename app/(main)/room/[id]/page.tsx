@@ -23,16 +23,9 @@ export default function RoomPage() {
         setRoomUrl(`https://${process.env.NEXT_PUBLIC_DAILY_DOMAIN}/${d.roomName}?t=${d.token}`);
       });
 
-    // 用 SHA-256 產生合法的 Excalidraw 協作 URL
-    async function buildWhiteboardUrl() {
-      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(id as string));
-      const bytes = new Uint8Array(buf);
-      const roomId = Array.from(bytes.slice(0, 10)).map(b => b.toString(16).padStart(2, "0")).join("");
-      const roomKey = btoa(String.fromCharCode(...bytes.slice(10, 26)))
-        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-      setWhiteboardUrl(`https://excalidraw.com/#room=${roomId},${roomKey}`);
-    }
-    buildWhiteboardUrl();
+    // tldraw 共享白板：同一個 room id 即可即時同步
+    const cleaned = (id as string).replace(/[^a-zA-Z0-9]/g, "").slice(0, 24);
+    setWhiteboardUrl(`https://tldraw.com/r/${cleaned}`);
   }, [id, session]);
 
   if (error) return (
