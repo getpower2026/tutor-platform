@@ -1,6 +1,13 @@
-﻿import Link from "next/link";
+﻿import type { Metadata } from "next";
+import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
 import { Search, Video, CreditCard, Star, BookOpen, Users, ShieldCheck } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "TutorLink｜免費家教媒合平台，線上一對一教學",
+  description: "TutorLink 是免費的家教媒合平台，提供國小、國中、高中線上一對一教學。輕鬆找到專業家教老師，直接聯繫，完全免費。",
+  alternates: { canonical: "https://www.tutorlink.cc" },
+};
 
 export default function HomePage() {
   return (
