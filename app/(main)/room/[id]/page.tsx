@@ -61,7 +61,7 @@ export default function RoomPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col">
+    <div className="bg-gray-900 flex flex-col" style={{ height: "100vh" }}>
       <div className="bg-gray-800 px-4 py-2 flex items-center justify-between">
         <span className="text-white font-bold">TutorLink 視訊教室</span>
         {status === "loading" && (
@@ -72,7 +72,7 @@ export default function RoomPage() {
         )}
         {status === "joined" && <span className="text-green-400 text-sm font-medium">● 已連線</span>}
       </div>
-      <div ref={containerRef} className="flex-1" />
+      <div ref={containerRef} style={{ flex: 1, minHeight: 0 }} />
     </div>
   );
 }
