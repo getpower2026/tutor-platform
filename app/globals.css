@@ -2,19 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import "@excalidraw/excalidraw/index.css";
-
-/* Fix Tailwind preflight breaking Excalidraw SVG icons */
-.excalidraw svg {
-  display: inline-block !important;
-  max-width: none !important;
-  width: auto !important;
-  height: auto !important;
-}
-.excalidraw canvas {
-  max-width: none !important;
-  display: block !important;
-}
 
 @layer base {
   :root {
