@@ -226,6 +226,18 @@ export default function DashboardPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-2 flex-wrap justify-end">
+                      {/* 學生可取消待確認的預約 */}
+                      {!isTeacher && booking.status === "PENDING" && (
+                        <button
+                          onClick={() => {
+                            if (confirm("確定要取消這筆預約嗎？")) handleAction(booking.id, "CANCELLED");
+                          }}
+                          disabled={!!actionLoading}
+                          className="px-3 py-1.5 bg-red-100 text-red-600 text-sm rounded-lg hover:bg-red-200 font-medium"
+                        >
+                          取消預約
+                        </button>
+                      )}
                       {/* 老師看到待確認時顯示接受/拒絕 */}
                       {isTeacher && booking.status === "PENDING" && (
                         <>

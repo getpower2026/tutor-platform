@@ -39,18 +39,29 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const { status } = await req.json();
 
-  // 只有老師可以接受/拒絕
   const booking = await prisma.booking.findUnique({
     where: { id },
     include: {
       student: { select: { name: true, email: true } },
-      teacher: { select: { name: true, teacherProfile: { select: { phone: true } } } },
+      teacher: { select: { name: true, email: true, teacherProfile: { select: { phone: true } } } },
     },
   });
 
   if (!booking) return NextResponse.json({ message: "找不到預約" }, { status: 404 });
-  if (booking.teacherId !== session.user.id) return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-  if (status === "COMPLETED" && booking.status !== "CONFIRMED") {
+
+  const isTeacher = booking.teacherId === session.user.id;
+  const isStudent = booking.studentId === session.user.id;
+
+  if (!isTeacher && !isStudent) return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+
+  // 學生只能取消「待確認」的預約
+  if (isStudent) {
+    if (status !== "CANCELLED") return NextResponse.json({ message: "學生只能取消預約" }, { status: 403 });
+    if (booking.status !== "PENDING") return NextResponse.json({ message: "只有待確認的預約才能取消" }, { status: 400 });
+  }
+
+  // 老師操作限制
+  if (isTeacher && status === "COMPLETED" && booking.status !== "CONFIRMED") {
     return NextResponse.json({ message: "只有已確認的預約才能標記完成" }, { status: 400 });
   }
 
@@ -59,17 +70,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     data: { status },
   });
 
-  // 發信通知學生（失敗不影響主流程）
+  const dateStr = new Date(booking.startTime).toLocaleString("zh-TW", {
+    timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
+  });
+
+  // 發信通知（失敗不影響主流程）
   try {
-    if (process.env.RESEND_API_KEY && (status === "CONFIRMED" || status === "CANCELLED")) {
-      const studentEmail = (booking as any).student?.email;
-      const studentName = (booking as any).student?.name;
-      const teacherName = (booking as any).teacher?.name;
-      const teacherPhone = (booking as any).teacher?.teacherProfile?.phone;
-      const dateStr = new Date(booking.startTime).toLocaleString("zh-TW", {
-        timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
-      });
-      if (studentEmail) {
+    if (process.env.RESEND_API_KEY) {
+      const studentEmail = booking.student?.email;
+      const studentName = booking.student?.name;
+      const teacherEmail = (booking.teacher as any)?.email;
+      const teacherName = booking.teacher?.name;
+      const teacherPhone = booking.teacher?.teacherProfile?.phone;
+
+      // 老師確認/拒絕 → 通知學生
+      if (isTeacher && (status === "CONFIRMED" || status === "CANCELLED") && studentEmail) {
         await sendMail({
           to: studentEmail,
           subject: status === "CONFIRMED" ? "【TutorLink】老師已接受您的預約！" : "【TutorLink】預約未獲接受",
@@ -93,6 +108,27 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
               <p>很抱歉，<strong>${teacherName} 老師</strong>無法接受您在 ${dateStr} 的預約。</p>
               <p>您可以嘗試預約其他老師，或選擇不同時段。</p>
               <p>請登入 <a href="https://www.tutorlink.cc/teachers" style="color:#4f46e5">TutorLink</a> 尋找其他老師。</p>
+              <p style="color:#999;font-size:12px;margin-top:24px">© 2026 TutorLink</p>
+            </div>
+          `,
+        });
+      }
+
+      // 學生取消 → 通知老師
+      if (isStudent && status === "CANCELLED" && teacherEmail) {
+        await sendMail({
+          to: teacherEmail,
+          subject: "【TutorLink】學生已取消預約",
+          html: `
+            <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:24px">
+              <h2 style="color:#ef4444">預約已被取消</h2>
+              <p>親愛的 ${teacherName} 老師，您好：</p>
+              <p><strong>${studentName}</strong> 已取消以下預約：</p>
+              <table style="width:100%;border-collapse:collapse;margin:16px 0">
+                <tr style="background:#fef2f2"><td style="padding:8px;color:#666">原定上課時間</td><td style="padding:8px;font-weight:bold">${dateStr}</td></tr>
+                <tr><td style="padding:8px;color:#666">學生姓名</td><td style="padding:8px">${studentName}</td></tr>
+              </table>
+              <p>請登入 <a href="https://www.tutorlink.cc/dashboard" style="color:#4f46e5">TutorLink 控制台</a> 查看最新預約狀態。</p>
               <p style="color:#999;font-size:12px;margin-top:24px">© 2026 TutorLink</p>
             </div>
           `,
