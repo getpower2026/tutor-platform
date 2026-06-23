@@ -5,9 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Loader2, PhoneOff, PenLine } from "lucide-react";
 
-function getExcalidrawUrl(bookingId: string) {
-  const roomId = bookingId.replace(/-/g, "").slice(0, 20).padEnd(20, "0");
-  const key = btoa(bookingId).replace(/[^a-zA-Z0-9]/g, "").slice(0, 22).padEnd(22, "A");
+const PAGES = [1, 2, 3, 4, 5];
+
+function getExcalidrawUrl(bookingId: string, page: number) {
+  const base = bookingId.replace(/-/g, "") + `p${page}`;
+  const roomId = base.slice(0, 20).padEnd(20, "0");
+  const key = btoa(base).replace(/[^a-zA-Z0-9]/g, "").slice(0, 22).padEnd(22, "A");
   return `https://excalidraw.com/#room=${roomId},${key}`;
 }
 
@@ -19,6 +22,7 @@ export default function RoomPage() {
   const [error, setError] = useState("");
   const [leaveModal, setLeaveModal] = useState(false);
   const [completing, setCompleting] = useState(false);
+  const [showPages, setShowPages] = useState(false);
   const isTeacher = session?.user?.role === "TEACHER";
 
   useEffect(() => {
@@ -31,8 +35,9 @@ export default function RoomPage() {
       });
   }, [id, session]);
 
-  const openWhiteboard = () => {
-    window.open(getExcalidrawUrl(id), "_blank");
+  const openPage = (page: number) => {
+    window.open(getExcalidrawUrl(id, page), "_blank");
+    setShowPages(false);
   };
 
   const handleComplete = async () => {
@@ -66,12 +71,28 @@ export default function RoomPage() {
           </span>
         )}
 
-        <button
-          onClick={openWhiteboard}
-          style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 12px", background: "#7c3aed", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
-        >
-          <PenLine style={{ width: 14, height: 14 }} /> 開啟白板
-        </button>
+        {/* 白板頁碼選擇器 */}
+        <div style={{ position: "relative" }}>
+          <button
+            onClick={() => setShowPages((v) => !v)}
+            style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 12px", background: "#7c3aed", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
+          >
+            <PenLine style={{ width: 14, height: 14 }} /> 白板 ▾
+          </button>
+          {showPages && (
+            <div style={{ position: "absolute", top: "110%", left: 0, background: "#1f2937", border: "1px solid #374151", borderRadius: "8px", padding: "6px", zIndex: 100, display: "flex", flexDirection: "column", gap: "4px", minWidth: "130px" }}>
+              {PAGES.map((p) => (
+                <button key={p} onClick={() => openPage(p)}
+                  style={{ display: "flex", alignItems: "center", gap: "6px", padding: "7px 12px", background: "transparent", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", textAlign: "left" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "#374151")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
+                  📄 第 {p} 頁
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <button
           onClick={() => setLeaveModal(true)}
