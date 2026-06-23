@@ -7,8 +7,8 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   const { name, email, password, role, phone } = await req.json();
 
-  if (!name || !email || !password) {
-    return NextResponse.json({ message: "請填寫所有欄位" }, { status: 400 });
+  if (!name || !email || !password || !phone) {
+    return NextResponse.json({ message: "請填寫所有欄位（姓名、Email、密碼、手機均為必填）" }, { status: 400 });
   }
 
   const existing = await prisma.user.findUnique({ where: { email } });
