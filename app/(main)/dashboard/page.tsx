@@ -177,9 +177,9 @@ export default function DashboardPage() {
                       {canJoin && (
                         <Link
                           href={`/room/${booking.id}`}
-                          className="inline-flex items-center gap-1 text-sm text-primary-600 font-medium hover:underline"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-bold rounded-lg shadow"
                         >
-                          <Video className="w-3 h-3" />
+                          <Video className="w-4 h-4" />
                           進入教室
                         </Link>
                       )}
