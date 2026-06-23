@@ -193,7 +193,7 @@ export default function DashboardPage() {
                 const Icon = st.icon;
                 const canJoin = booking.status === "CONFIRMED";
                 const otherPerson = isTeacher ? booking.student : booking.teacher;
-                const isPastConfirmed = booking.status === "CONFIRMED" && new Date(booking.endTime) < now;
+                const isPastConfirmed = booking.status === "CONFIRMED";
                 const canReview = !isTeacher && booking.status === "COMPLETED" && !booking.review;
 
                 return (
