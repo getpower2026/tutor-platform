@@ -64,12 +64,21 @@ export default function TeacherProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
+    // show preview immediately
+    const localUrl = URL.createObjectURL(file);
+    setPhotoUrl(localUrl);
     const formData = new FormData();
     formData.append("file", file);
     const res = await fetch("/api/upload", { method: "POST", body: formData });
     if (res.ok) {
       const { url } = await res.json();
       setPhotoUrl(url);
+      // save photo immediately so mobile page jump doesn't lose it
+      await fetch(`/api/teachers/${session?.user.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photoUrl: url }),
+      });
     }
     setUploading(false);
   };
