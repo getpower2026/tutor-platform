@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
-import { Users, BookOpen, Calendar, Phone, Mail, Clock } from "lucide-react";
+import { Users, BookOpen, Calendar, Phone, Mail, Clock, Trash2 } from "lucide-react";
 
 const ADMIN_EMAIL = "tantriswang@gmail.com";
 
@@ -22,6 +22,23 @@ export default function AdminPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"teachers" | "students" | "bookings">("teachers");
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const handleDelete = async (userId: string, name: string) => {
+    if (!confirm(`確定要刪除「${name}」？此操作不可復原，相關預約也會一併刪除。`)) return;
+    setDeleting(userId);
+    const res = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
+    if (res.ok) {
+      setData((prev: any) => ({
+        ...prev,
+        teachers: prev.teachers.filter((t: any) => t.user.id !== userId),
+        students: prev.students.filter((s: any) => s.id !== userId),
+      }));
+    } else {
+      alert("刪除失敗，請再試一次");
+    }
+    setDeleting(null);
+  };
 
   useEffect(() => {
     if (status === "unauthenticated") { router.push("/login"); return; }
@@ -84,7 +101,7 @@ export default function AdminPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  {["姓名", "Email", "手機", "科目", "時薪", "年資", "學歷", "註冊日"].map((h) => (
+                  {["姓名", "Email", "手機", "科目", "時薪", "年資", "學歷", "註冊日", ""].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-gray-500 font-medium">{h}</th>
                   ))}
                 </tr>
@@ -118,6 +135,15 @@ export default function AdminPage() {
                     <td className="px-4 py-3 text-gray-400">
                       <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatDate(t.user.createdAt)}</span>
                     </td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => handleDelete(t.user.id, t.user.name)}
+                        disabled={deleting === t.user.id}
+                        className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                      >
+                        <Trash2 className="w-3 h-3" />刪除
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -132,7 +158,7 @@ export default function AdminPage() {
             <table className="w-full text-sm">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
-                  {["姓名", "Email", "手機", "註冊日"].map((h) => (
+                  {["姓名", "Email", "手機", "註冊日", ""].map((h) => (
                     <th key={h} className="text-left px-4 py-3 text-gray-500 font-medium">{h}</th>
                   ))}
                 </tr>
@@ -155,6 +181,15 @@ export default function AdminPage() {
                     </td>
                     <td className="px-4 py-3 text-gray-400">
                       <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatDate(s.createdAt)}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => handleDelete(s.id, s.name)}
+                        disabled={deleting === s.id}
+                        className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                      >
+                        <Trash2 className="w-3 h-3" />刪除
+                      </button>
                     </td>
                   </tr>
                 ))}
