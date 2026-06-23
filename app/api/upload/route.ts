@@ -16,7 +16,6 @@ export async function POST(req: Request) {
   const ext = file.name.split(".").pop();
   const blob = await put(`teachers/${session.user.id}.${ext}`, file, {
     access: "public",
-    allowedContentTypes: ["image/jpeg", "image/png", "image/webp"],
   });
 
   return NextResponse.json({ url: blob.url });
