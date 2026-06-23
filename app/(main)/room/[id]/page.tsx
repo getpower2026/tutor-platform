@@ -46,11 +46,16 @@ export default function RoomPage() {
       call = DailyIframe.createCallObject();
       callRef.current = call;
 
-      call.on("joined-meeting", () => {
+      call.on("joined-meeting", async () => {
+        // 訂閱所有遠端音視訊
+        call.updateParticipant("*", { setSubscribedTracks: { audio: true, video: true, screenVideo: true } });
         setStatus("joined");
         updateParticipants(call);
       });
-      call.on("participant-joined", () => updateParticipants(call));
+      call.on("participant-joined", (e: any) => {
+        call.updateParticipant(e.participant.session_id, { setSubscribedTracks: { audio: true, video: true } });
+        updateParticipants(call);
+      });
       call.on("participant-updated", () => updateParticipants(call));
       call.on("participant-left", () => updateParticipants(call));
       call.on("track-started", () => updateParticipants(call));
