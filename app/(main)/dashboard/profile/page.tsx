@@ -92,7 +92,7 @@ export default function TeacherProfilePage() {
     await fetch(`/api/teachers/${session!.user.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...data, subjects: selectedSubjects, availability: avail, languages: ["中文"], photoUrl: (photoUrl && !photoUrl.startsWith("blob:")) ? photoUrl : undefined }),
+      body: JSON.stringify({ ...data, subjects: selectedSubjects, availability: avail, languages: ["中文"] }),
     });
     setSaving(false);
     setSuccess(true);

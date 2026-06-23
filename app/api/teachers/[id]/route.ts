@@ -26,19 +26,20 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   const data = await req.json();
+  const updateData: any = {};
+  if (data.bio !== undefined) updateData.bio = data.bio;
+  if (data.subjects !== undefined) updateData.subjects = data.subjects;
+  if (data.hourlyRate !== undefined) updateData.hourlyRate = data.hourlyRate;
+  if (data.experience !== undefined) updateData.experience = data.experience;
+  if (data.education !== undefined) updateData.education = data.education;
+  if (data.languages !== undefined) updateData.languages = data.languages;
+  if (data.availability !== undefined) updateData.availability = data.availability;
+  if (data.phone !== undefined) updateData.phone = data.phone;
+  if (data.photoUrl !== undefined && data.photoUrl !== "" && !data.photoUrl.startsWith("blob:")) updateData.photoUrl = data.photoUrl;
+
   const profile = await prisma.teacherProfile.update({
     where: { userId: id },
-    data: {
-      bio: data.bio,
-      subjects: data.subjects,
-      hourlyRate: data.hourlyRate,
-      experience: data.experience,
-      education: data.education,
-      languages: data.languages,
-      availability: data.availability,
-      phone: data.phone,
-      photoUrl: data.photoUrl,
-    },
+    data: updateData,
   });
 
   return NextResponse.json(profile);
