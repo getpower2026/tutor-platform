@@ -16,7 +16,7 @@ export async function GET() {
   const [teachers, students, bookings] = await Promise.all([
     prisma.teacherProfile.findMany({
       include: {
-        user: { select: { name: true, email: true, phone: true, createdAt: true } },
+        user: { select: { id: true, name: true, email: true, phone: true, createdAt: true } },
       },
       orderBy: { createdAt: "desc" },
     }),
