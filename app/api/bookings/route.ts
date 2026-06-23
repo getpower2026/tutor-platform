@@ -67,16 +67,19 @@ export async function POST(req: Request) {
       subject: "【TutorLink】您有新的預約通知",
       html: `
         <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:24px">
-          <h2 style="color:#4f46e5">您有新的上課預約！</h2>
+          <h2 style="color:#4f46e5">您有新的上課預約申請！</h2>
           <p>親愛的 ${(teacher as any).user?.name} 老師，您好：</p>
-          <p>有學生預約了您的課程，詳情如下：</p>
+          <p>有家長預約了您的課程，詳情如下：</p>
           <table style="width:100%;border-collapse:collapse;margin:16px 0">
             <tr><td style="padding:8px;color:#666">上課時間</td><td style="padding:8px;font-weight:bold">${dateStr}</td></tr>
             <tr style="background:#f9fafb"><td style="padding:8px;color:#666">參考時薪</td><td style="padding:8px;font-weight:bold">NT$ ${teacher.hourlyRate} / 小時</td></tr>
-            ${note ? `<tr><td style="padding:8px;color:#666">學生備註</td><td style="padding:8px">${note}</td></tr>` : ""}
+            ${note ? `<tr><td style="padding:8px;color:#666">家長備註</td><td style="padding:8px">${note}</td></tr>` : ""}
           </table>
-          <p>請與學生直接聯繫，確認上課細節與收費方式。</p>
-          <p>請登入 <a href="https://www.tutorlink.cc" style="color:#4f46e5">TutorLink</a> 查看預約詳情。</p>
+          <div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:12px 16px;margin:16px 0;border-radius:4px">
+            <p style="margin:0;font-weight:bold;color:#92400e">📋 請您登入帳號，至控制台按下「接受」或「拒絕」</p>
+            <p style="margin:8px 0 0;color:#92400e;font-size:14px">按下「接受」後，家長才會收到您的電話號碼，雙方可直接聯繫討論收費方式。</p>
+          </div>
+          <a href="https://www.tutorlink.cc/dashboard" style="display:inline-block;background:#4f46e5;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:8px">前往控制台處理預約</a>
           <p style="color:#999;font-size:12px;margin-top:24px">© 2026 TutorLink</p>
         </div>
       `,
