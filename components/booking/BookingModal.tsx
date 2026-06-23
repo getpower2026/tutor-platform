@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, Loader2, Calendar, Clock } from "lucide-react";
-import { formatNTD } from "@/lib/utils";
 
 interface Props {
   teacher: { userId: string; user: { name: string }; hourlyRate: number };
@@ -18,9 +17,6 @@ export function BookingModal({ teacher, onClose }: Props) {
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const totalAmount = teacher.hourlyRate * duration;
-  const platformFee = 0;
 
   const handleSubmit = async () => {
     if (!date || !startTime) { setError("請選擇日期與時間"); return; }
@@ -61,7 +57,6 @@ export function BookingModal({ teacher, onClose }: Props) {
         </div>
 
         <div className="space-y-4">
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
               <Calendar className="w-4 h-4" /> 上課日期
@@ -103,17 +98,13 @@ export function BookingModal({ teacher, onClose }: Props) {
             />
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4 text-sm space-y-2">
-            <div className="flex justify-between"><span className="text-gray-500">課程費用</span><span>{formatNTD(totalAmount)}</span></div>
-            <div className="flex justify-between"><span className="text-green-600 font-medium">平台手續費</span><span className="text-green-600 font-medium">免費</span></div>
-            <div className="flex justify-between font-bold border-t pt-2">
-              <span>總計</span><span className="text-primary-600">{formatNTD(totalAmount + platformFee)}</span>
-            </div>
+          <div className="bg-blue-50 rounded-lg p-4 text-sm text-blue-700">
+            ℹ️ 預約送出後，老師將收到通知並與您聯繫，收費方式由雙方自行討論。
           </div>
 
           {error && <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg">{error}</div>}
           <button onClick={handleSubmit} disabled={loading} className="btn-primary w-full py-3">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "確認預約並付款"}
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "確認預約"}
           </button>
         </div>
       </div>
