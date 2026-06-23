@@ -43,12 +43,17 @@ export default function DashboardPage() {
 
   const handleAction = async (bookingId: string, newStatus: "CONFIRMED" | "CANCELLED") => {
     setActionLoading(bookingId + newStatus);
-    await fetch(`/api/bookings/${bookingId}`, {
+    const res = await fetch(`/api/bookings/${bookingId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: newStatus }),
     });
-    setBookings((prev) => prev.map((b) => b.id === bookingId ? { ...b, status: newStatus } : b));
+    if (res.ok) {
+      setBookings((prev) => prev.map((b) => b.id === bookingId ? { ...b, status: newStatus } : b));
+    } else {
+      const err = await res.json().catch(() => ({}));
+      alert(`操作失敗：${err.message || res.status}，請重新整理後再試`);
+    }
     setActionLoading(null);
   };
 
