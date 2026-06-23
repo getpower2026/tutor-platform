@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
-import { Calendar, Video, Clock, CheckCircle, XCircle, AlertCircle, User } from "lucide-react";
+import { Calendar, Video, Clock, CheckCircle, XCircle, AlertCircle, User, KeyRound } from "lucide-react";
 import { formatDateTime, formatNTD } from "@/lib/utils";
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
@@ -72,6 +72,10 @@ export default function DashboardPage() {
             {!isTeacher && (
               <Link href="/teachers" className="btn-primary">尋找老師</Link>
             )}
+            <Link href="/change-password" className="btn-secondary flex items-center gap-1">
+              <KeyRound className="w-4 h-4" />
+              更改密碼
+            </Link>
           </div>
         </div>
 
