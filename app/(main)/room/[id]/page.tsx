@@ -23,15 +23,9 @@ export default function RoomPage() {
         setRoomUrl(`https://${process.env.NEXT_PUBLIC_DAILY_DOMAIN}/${d.roomName}?t=${d.token}`);
       });
 
-    // 產生 Excalidraw 協作 URL（新分頁開啟，不用 iframe）
-    async function buildWhiteboardUrl() {
-      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(id as string));
-      const bytes = new Uint8Array(buf);
-      const roomId = btoa(String.fromCharCode(...bytes.slice(0, 15))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-      const roomKey = btoa(String.fromCharCode(...bytes.slice(15, 31))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
-      setWhiteboardUrl(`https://excalidraw.com/#room=${roomId},${roomKey}`);
-    }
-    buildWhiteboardUrl();
+    // Witeboard：用 booking ID 的前 20 碼當房間 ID，自動建立、無需帳號
+    const wbId = (id as string).replace(/[^a-zA-Z0-9]/g, "").slice(0, 20);
+    setWhiteboardUrl(`https://witeboard.com/${wbId}`);
   }, [id, session]);
 
   if (error) return (
