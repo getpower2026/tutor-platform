@@ -44,7 +44,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     where: { id },
     include: {
       student: { select: { name: true, email: true } },
-      teacher: { select: { name: true } },
+      teacher: { select: { name: true, teacherProfile: { select: { phone: true } } } },
     },
   });
 
@@ -62,6 +62,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       const studentEmail = (booking as any).student?.email;
       const studentName = (booking as any).student?.name;
       const teacherName = (booking as any).teacher?.name;
+      const teacherPhone = (booking as any).teacher?.teacherProfile?.phone;
       const dateStr = new Date(booking.startTime).toLocaleString("zh-TW", {
         timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
       });
@@ -76,8 +77,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
               <p><strong>${teacherName} 老師</strong>已接受您的預約，請盡快與老師聯繫確認上課細節。</p>
               <table style="width:100%;border-collapse:collapse;margin:16px 0">
                 <tr><td style="padding:8px;color:#666">上課時間</td><td style="padding:8px;font-weight:bold">${dateStr}</td></tr>
+                ${teacherPhone ? `<tr style="background:#f0fdf4"><td style="padding:8px;color:#666">老師電話</td><td style="padding:8px;font-weight:bold;color:#16a34a">📞 ${teacherPhone}</td></tr>` : ""}
               </table>
-              <p>請登入 <a href="https://www.tutorlink.cc" style="color:#4f46e5">TutorLink</a> 查看老師聯絡方式。</p>
+              ${teacherPhone ? `<div style="background:#f0fdf4;border-left:4px solid #16a34a;padding:12px 16px;margin:16px 0;border-radius:4px"><p style="margin:0;color:#15803d;font-weight:bold">請主動致電老師，討論收費方式與正式上課時間。</p></div>` : ""}
+              <p>請登入 <a href="https://www.tutorlink.cc" style="color:#4f46e5">TutorLink</a> 查看更多資訊。</p>
               <p style="color:#999;font-size:12px;margin-top:24px">© 2026 TutorLink</p>
             </div>
           ` : `
