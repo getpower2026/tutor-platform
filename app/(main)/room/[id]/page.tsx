@@ -117,15 +117,20 @@ export default function RoomPage() {
     }
   }, []);
 
+  // ── Pusher 訂閱（公開 channel，伺服器觸發）──
+  const mySocketId = useRef<string>("");
+
   useEffect(() => {
     if (!session) return;
     const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
       cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
-      authEndpoint: "/api/pusher/auth",
     });
-    const channel = pusher.subscribe(`private-whiteboard-${id}`);
-    channelRef.current = channel;
-    channel.bind("client-stroke", (data: any) => {
+    pusher.connection.bind("connected", () => {
+      mySocketId.current = pusher.connection.socket_id;
+    });
+    const channel = pusher.subscribe(`whiteboard-${id}`);
+    channel.bind("stroke", (data: any) => {
+      if (data.senderSocketId && data.senderSocketId === mySocketId.current) return;
       if (data.type === "clear") {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -141,18 +146,23 @@ export default function RoomPage() {
       }
       drawSegments(data.points, data.color, data.size, data.tool);
     });
-    return () => { channel.unbind_all(); pusher.unsubscribe(`private-whiteboard-${id}`); pusher.disconnect(); channelRef.current = null; };
+    return () => { channel.unbind_all(); pusher.unsubscribe(`whiteboard-${id}`); pusher.disconnect(); };
   }, [id, session, drawSegments, loadPage]);
 
+  // ── 每 80ms 批次送至伺服器 → Pusher 廣播 ──
   useEffect(() => {
     const flush = setInterval(() => {
-      if (pendingPoints.current.length === 0 || !channelRef.current) return;
+      if (pendingPoints.current.length === 0) return;
       const points = pendingPoints.current;
       pendingPoints.current = [];
-      channelRef.current.trigger("client-stroke", { points, color: colorRef.current, size: sizeRef.current, tool: toolRef.current });
-    }, 50);
+      fetch(`/api/whiteboard/${id}/stroke`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ points, color: colorRef.current, size: sizeRef.current, tool: toolRef.current, senderSocketId: mySocketId.current }),
+      }).catch(() => {});
+    }, 80);
     return () => clearInterval(flush);
-  }, []);
+  }, [id]);
 
   const getPos = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current!;

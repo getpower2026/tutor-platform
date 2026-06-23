@@ -12,10 +12,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const body = await req.json();
 
-  await pusherServer.trigger(`whiteboard-${id}`, "stroke", {
-    ...body,
-    senderId: session.user.id,
-  });
+  await pusherServer.trigger(`whiteboard-${id}`, "stroke", body);
 
   return NextResponse.json({ ok: true });
 }
