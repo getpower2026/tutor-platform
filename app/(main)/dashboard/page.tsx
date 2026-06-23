@@ -280,21 +280,19 @@ export default function DashboardPage() {
                       )}
                       {/* 查看白板各頁 */}
                       {booking.status === "COMPLETED" && (
-                        <div className="flex items-center gap-1 flex-wrap">
+                        <select
+                          defaultValue=""
+                          onChange={(e) => { if (e.target.value) { window.open(e.target.value, "_blank"); e.target.value = ""; } }}
+                          className="text-xs border border-purple-200 bg-purple-50 text-purple-700 rounded-lg px-2 py-1.5 cursor-pointer font-medium"
+                        >
+                          <option value="" disabled>📄 查看白板</option>
                           {Array.from({ length: 50 }, (_, i) => i + 1).map((p) => {
                             const cleaned = booking.id.replace(/-/g,"").slice(0,17);
-                            const pageStr = String(p).padStart(2,"0");
-                            const roomId = (cleaned + pageStr + "0").slice(0,20);
+                            const roomId = (cleaned + String(p).padStart(2,"0") + "0").slice(0,20);
                             const key = btoa(booking.id + p).replace(/[^a-zA-Z0-9]/g,"").slice(0,22).padEnd(22,"A");
-                            const url = `https://excalidraw.com/#room=${roomId},${key}`;
-                            return (
-                              <a key={p} href={url} target="_blank" rel="noopener noreferrer"
-                                className="inline-flex items-center px-2 py-1 bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs font-medium rounded-lg">
-                                📄 第{p}頁
-                              </a>
-                            );
+                            return <option key={p} value={`https://excalidraw.com/#room=${roomId},${key}`}>第 {p} 頁</option>;
                           })}
-                        </div>
+                        </select>
                       )}
                       {/* 學生評價按鈕 */}
                       {canReview && (
