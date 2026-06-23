@@ -3,13 +3,18 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Loader2, PhoneOff, Video, PenLine } from "lucide-react";
+import { Loader2, PhoneOff, PenLine } from "lucide-react";
+
+function getExcalidrawUrl(bookingId: string) {
+  const roomId = bookingId.replace(/-/g, "").slice(0, 20).padEnd(20, "0");
+  const key = btoa(bookingId).replace(/[^a-zA-Z0-9]/g, "").slice(0, 22).padEnd(22, "A");
+  return `https://excalidraw.com/#room=${roomId},${key}`;
+}
 
 export default function RoomPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { data: session } = useSession();
-  const [tab, setTab] = useState<"video" | "whiteboard">("video");
   const [roomUrl, setRoomUrl] = useState("");
   const [error, setError] = useState("");
   const [leaveModal, setLeaveModal] = useState(false);
@@ -25,6 +30,10 @@ export default function RoomPage() {
         setRoomUrl(`https://${process.env.NEXT_PUBLIC_DAILY_DOMAIN}/${d.roomName}?t=${d.token}`);
       });
   }, [id, session]);
+
+  const openWhiteboard = () => {
+    window.open(getExcalidrawUrl(id), "_blank");
+  };
 
   const handleComplete = async () => {
     setCompleting(true);
@@ -57,52 +66,30 @@ export default function RoomPage() {
           </span>
         )}
 
-        {/* Tabs */}
-        <div style={{ display: "flex", gap: "4px", marginLeft: "8px" }}>
-          <button
-            onClick={() => setTab("video")}
-            style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 12px", background: tab === "video" ? "#3b82f6" : "#374151", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
-          >
-            <Video style={{ width: 14, height: 14 }} /> 視訊
-          </button>
-          <button
-            onClick={() => setTab("whiteboard")}
-            style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 12px", background: tab === "whiteboard" ? "#7c3aed" : "#374151", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
-          >
-            <PenLine style={{ width: 14, height: 14 }} /> 白板
-          </button>
-        </div>
+        <button
+          onClick={openWhiteboard}
+          style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 12px", background: "#7c3aed", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
+        >
+          <PenLine style={{ width: 14, height: 14 }} /> 開啟白板
+        </button>
 
         <button
           onClick={() => setLeaveModal(true)}
           style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "4px", padding: "5px 10px", background: "#ef4444", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
         >
-          <PhoneOff style={{ width: 14, height: 14 }} /> 離開
+          <PhoneOff style={{ width: 14, height: 14 }} /> 離開教室
         </button>
       </div>
 
-      {/* Content — both always mounted */}
-      <div style={{ flex: 1, minHeight: 0, position: "relative" }}>
-        {/* Video */}
-        <div style={{ position: "absolute", inset: 0, display: tab === "video" ? "block" : "none" }}>
-          {roomUrl && (
-            <iframe
-              src={roomUrl}
-              allow="camera; microphone; fullscreen; speaker; display-capture; autoplay"
-              style={{ width: "100%", height: "100%", border: "none" }}
-            />
-          )}
-        </div>
-
-        {/* Whiteboard — same-origin iframe, no Tailwind conflict, Excalidraw + Pusher sync */}
-        <div style={{ position: "absolute", inset: 0, display: tab === "whiteboard" ? "block" : "none" }}>
-          {session && (
-            <iframe
-              src={`/wb/${id}`}
-              style={{ width: "100%", height: "100%", border: "none" }}
-            />
-          )}
-        </div>
+      {/* 視訊 */}
+      <div style={{ flex: 1, minHeight: 0 }}>
+        {roomUrl && (
+          <iframe
+            src={roomUrl}
+            allow="camera; microphone; fullscreen; speaker; display-capture; autoplay"
+            style={{ width: "100%", height: "100%", border: "none" }}
+          />
+        )}
       </div>
 
       {/* Leave Modal */}

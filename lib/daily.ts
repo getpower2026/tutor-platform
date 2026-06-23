@@ -18,6 +18,7 @@ export async function createDailyRoom(bookingId: string, expiresAt: Date) {
         enable_screenshare: true,
         start_video_off: false,
         start_audio_off: false,
+        enable_prejoin_ui: false,
       },
     }),
   });
