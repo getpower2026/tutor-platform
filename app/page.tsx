@@ -35,9 +35,8 @@ export default function HomePage() {
           <p className="text-gray-500 text-center mb-12">三個簡單步驟，開始你的學習之旅</p>
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { icon: Search, step: "1", title: "搜尋老師", desc: "依科目、價格、時段篩選，找到最適合的老師" },
-              { icon: CreditCard, step: "2", title: "預約付款", desc: "選擇時段，線上安全付款，即刻確認預約" },
-              { icon: Video, step: "3", title: "視訊上課", desc: "在平台內直接視訊，無需安裝任何軟體" },
+              { icon: Search, step: "1", title: "搜尋老師", desc: "依科目、時段篩選，找到最適合的老師" },
+              { icon: Video, step: "2", title: "預約上課", desc: "選擇時段，即刻確認預約，免費開始學習" },
             ].map(({ icon: Icon, step, title, desc }) => (
               <div key={step} className="text-center">
                 <div className="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
