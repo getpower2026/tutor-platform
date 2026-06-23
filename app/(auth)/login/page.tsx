@@ -52,7 +52,10 @@ export default function LoginPage() {
             {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">密碼</label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-medium text-gray-700">密碼</label>
+              <Link href="/forgot-password" className="text-xs text-primary-600 hover:underline">忘記密碼？</Link>
+            </div>
             <input
               {...register("password", { required: "請輸入密碼" })}
               type="password"
