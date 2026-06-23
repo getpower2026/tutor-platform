@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Loader2, PhoneOff, Video, PenLine } from "lucide-react";
+import Pusher from "pusher-js";
 
 const COLORS = ["#000000", "#ef4444", "#3b82f6", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#ffffff"];
 const SIZES = [2, 5, 10, 20];
@@ -25,6 +26,7 @@ export default function RoomPage() {
   const lastPos = useRef<{ x: number; y: number } | null>(null);
   const dirty = useRef(false);
   const lastDrawTime = useRef(0);
+  const pusherRef = useRef<Pusher | null>(null);
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
   const [wbTool, setWbTool] = useState<"pen" | "eraser">("pen");
@@ -78,6 +80,45 @@ export default function RoomPage() {
     img.src = data;
   }, [id]);
 
+  // 在 canvas 上畫一條遠端筆跡
+  const applyStroke = useCallback((data: any) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d")!;
+    if (data.type === "clear") {
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
+    ctx.beginPath();
+    ctx.moveTo(data.px, data.py);
+    ctx.lineTo(data.x, data.y);
+    ctx.strokeStyle = data.tool === "eraser" ? "#ffffff" : data.color;
+    ctx.lineWidth = data.tool === "eraser" ? data.size * 4 : data.size;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.stroke();
+  }, []);
+
+  // Pusher 訂閱
+  useEffect(() => {
+    if (!session) return;
+    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+    });
+    pusherRef.current = pusher;
+    const channel = pusher.subscribe(`whiteboard-${id}`);
+    channel.bind("stroke", (data: any) => {
+      if (data.senderId === session.user.id) return; // 自己送出的不重複畫
+      applyStroke(data);
+    });
+    return () => {
+      channel.unbind_all();
+      pusher.unsubscribe(`whiteboard-${id}`);
+      pusher.disconnect();
+    };
+  }, [id, session, applyStroke]);
+
   useEffect(() => {
     const t = setTimeout(() => { initCanvas(); download(); }, 200);
     const poll = setInterval(download, 2000);
@@ -106,11 +147,19 @@ export default function RoomPage() {
     if (!drawing.current) return;
     const ctx = canvasRef.current!.getContext("2d")!;
     const pos = getPos(e);
-    ctx.beginPath(); ctx.moveTo(lastPos.current!.x, lastPos.current!.y); ctx.lineTo(pos.x, pos.y);
+    const px = lastPos.current!.x;
+    const py = lastPos.current!.y;
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(pos.x, pos.y);
     ctx.strokeStyle = wbTool === "eraser" ? "#ffffff" : color;
     ctx.lineWidth = wbTool === "eraser" ? size * 4 : size;
     ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.stroke();
     lastPos.current = pos; dirty.current = true; lastDrawTime.current = Date.now();
+    // 即時廣播這段筆跡
+    fetch(`/api/whiteboard/${id}/stroke`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ px, py, x: pos.x, y: pos.y, color, size, tool: wbTool }),
+    }).catch(() => {});
   };
 
   const stopDraw = (e: React.MouseEvent | React.TouchEvent) => {
@@ -123,6 +172,11 @@ export default function RoomPage() {
     const ctx = canvas.getContext("2d")!;
     ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
     dirty.current = true; upload();
+    fetch(`/api/whiteboard/${id}/stroke`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "clear" }),
+    }).catch(() => {});
   };
 
   const handleComplete = async () => {
