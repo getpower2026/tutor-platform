@@ -246,9 +246,12 @@ export default function TeacherProfilePage() {
             </div>
           </div>
 
-          {success && <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg text-sm">✓ 儲存成功！</div>}
-          <button type="submit" disabled={saving || uploading} className="btn-primary w-full py-3 flex items-center justify-center gap-2">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          <div className="bg-amber-50 border border-amber-300 text-amber-800 px-4 py-3 rounded-lg text-sm font-medium">
+            ⚠️ 提醒：填寫完畢後，請務必按下「儲存個人檔案」，資料才會生效並顯示在尋找老師頁面。
+          </div>
+          {success && <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg text-sm font-medium">✓ 儲存成功！您的資料已更新。</div>}
+          <button type="submit" disabled={saving || uploading} className="w-full py-4 text-lg font-bold rounded-xl bg-primary-600 hover:bg-primary-700 text-white flex items-center justify-center gap-3 shadow-lg transition-colors">
+            {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
             儲存個人檔案
           </button>
         </form>
