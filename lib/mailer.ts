@@ -1,16 +1,9 @@
-import nodemailer from "nodemailer";
-
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS,
-  },
-});
+import { Resend } from "resend";
 
 export async function sendMail({ to, subject, html }: { to: string; subject: string; html: string }) {
-  await transporter.sendMail({
-    from: `TutorLink <${process.env.GMAIL_USER}>`,
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  await resend.emails.send({
+    from: "TutorLink <noreply@tutorlink.cc>",
     to,
     subject,
     html,
