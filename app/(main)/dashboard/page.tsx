@@ -21,6 +21,7 @@ export default function DashboardPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [missingPhone, setMissingPhone] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -37,6 +38,11 @@ export default function DashboardPage() {
     if (session) {
       fetchBookings();
       const interval = setInterval(fetchBookings, 30000);
+      if (session.user.role === "TEACHER") {
+        fetch(`/api/teachers/${session.user.id}`).then((r) => r.json()).then((d) => {
+          if (!d.phone) setMissingPhone(true);
+        });
+      }
       return () => clearInterval(interval);
     }
   }, [session]);
@@ -67,6 +73,12 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
+      {isTeacher && missingPhone && (
+        <div className="bg-red-600 text-white py-3 px-4 text-center font-medium">
+          ⚠️ 您尚未填寫手機號碼！家長確認預約後將看不到您的聯絡方式。
+          <Link href="/dashboard/profile" className="ml-3 underline font-bold">立即前往填寫 →</Link>
+        </div>
+      )}
       <div className="max-w-5xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
