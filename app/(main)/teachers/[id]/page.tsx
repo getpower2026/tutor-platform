@@ -3,25 +3,39 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import Image from "next/image";
 import { Navbar } from "@/components/layout/Navbar";
 import { BookingModal } from "@/components/booking/BookingModal";
-import { Star, Clock, GraduationCap, Languages, BookOpen, Calendar } from "lucide-react";
+import { Star, Clock, GraduationCap, Languages, BookOpen, Calendar, MessageSquare } from "lucide-react";
 import { formatNTD } from "@/lib/utils";
+
+function StarDisplay({ rating }: { rating: number }) {
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((s) => (
+        <Star key={s} className={`w-4 h-4 ${s <= rating ? "fill-amber-400 text-amber-400" : "text-gray-200"}`} />
+      ))}
+    </div>
+  );
+}
 
 export default function TeacherDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: session } = useSession();
   const router = useRouter();
   const [teacher, setTeacher] = useState<any>(null);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showBooking, setShowBooking] = useState(false);
 
   useEffect(() => {
     setTeacher(null);
     setLoading(true);
-    fetch(`/api/teachers/${id}`, { cache: 'no-store' }).then((r) => r.json()).then((d) => {
-      setTeacher(d);
+    Promise.all([
+      fetch(`/api/teachers/${id}`, { cache: "no-store" }).then((r) => r.json()),
+      fetch(`/api/teachers/${id}/reviews`).then((r) => r.json()),
+    ]).then(([teacherData, reviewsData]) => {
+      setTeacher(teacherData);
+      setReviews(Array.isArray(reviewsData) ? reviewsData : []);
       setLoading(false);
     });
   }, [id]);
@@ -59,8 +73,10 @@ export default function TeacherDetailPage() {
               <h1 className="text-3xl font-bold mb-2">{teacher.user.name}</h1>
               <div className="flex items-center gap-2 text-amber-500 mb-3">
                 <Star className="w-5 h-5 fill-current" />
-                <span className="font-bold text-lg">{teacher.rating.toFixed(1)}</span>
-                <span className="text-gray-400">({teacher.reviewCount} 則評價)</span>
+                <span className="font-bold text-lg">{teacher.rating > 0 ? teacher.rating.toFixed(1) : "尚無評分"}</span>
+                {teacher.reviewCount > 0 && (
+                  <span className="text-gray-400">({teacher.reviewCount} 則評價)</span>
+                )}
               </div>
               <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                 <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> 教學 {teacher.experience} 年</span>
@@ -99,6 +115,47 @@ export default function TeacherDetailPage() {
                 ))}
               </div>
             </div>
+
+            {/* 評價區塊 */}
+            <div className="card p-6">
+              <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-primary-500" />
+                學生評價
+                {reviews.length > 0 && (
+                  <span className="text-sm font-normal text-gray-400">（{reviews.length} 則）</span>
+                )}
+              </h2>
+
+              {reviews.length === 0 ? (
+                <p className="text-gray-400 text-sm">尚無評價</p>
+              ) : (
+                <div className="space-y-4">
+                  {reviews.map((review) => (
+                    <div key={review.id} className="border-b border-gray-50 pb-4 last:border-0 last:pb-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold text-sm flex-shrink-0">
+                          {review.reviewer.name[0]}
+                        </div>
+                        <div>
+                          <div className="font-medium text-sm">
+                            {review.reviewer.name[0]}{"*".repeat(Math.max(0, review.reviewer.name.length - 1))}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <StarDisplay rating={review.rating} />
+                            <span className="text-xs text-gray-400">
+                              {new Date(review.createdAt).toLocaleDateString("zh-TW")}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      {review.comment && (
+                        <p className="text-gray-600 text-sm leading-relaxed pl-11">{review.comment}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="card p-6 h-fit">
@@ -108,6 +165,15 @@ export default function TeacherDetailPage() {
                 <span className="text-gray-500">參考時薪</span>
                 <span className="font-medium">{formatNTD(teacher.hourlyRate)} / 小時</span>
               </div>
+              {teacher.rating > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-500">評分</span>
+                  <div className="flex items-center gap-1">
+                    <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                    <span className="font-medium">{teacher.rating.toFixed(1)}</span>
+                  </div>
+                </div>
+              )}
               <div className="border-t pt-3 text-xs text-gray-400">
                 實際收費由老師與家長自行討論，本平台完全免費。
               </div>

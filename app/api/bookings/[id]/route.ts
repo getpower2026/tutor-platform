@@ -50,6 +50,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   if (!booking) return NextResponse.json({ message: "找不到預約" }, { status: 404 });
   if (booking.teacherId !== session.user.id) return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  if (status === "COMPLETED" && booking.status !== "CONFIRMED") {
+    return NextResponse.json({ message: "只有已確認的預約才能標記完成" }, { status: 400 });
+  }
 
   const updated = await prisma.booking.update({
     where: { id },

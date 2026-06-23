@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
-import { Calendar, Video, Clock, CheckCircle, XCircle, AlertCircle, User, KeyRound, RefreshCw } from "lucide-react";
+import { Calendar, Video, Clock, CheckCircle, XCircle, AlertCircle, User, KeyRound, RefreshCw, Star } from "lucide-react";
 import { formatDateTime, formatNTD } from "@/lib/utils";
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
@@ -15,6 +15,26 @@ const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = 
   CANCELLED: { label: "已取消", color: "text-gray-500 bg-gray-50",    icon: XCircle },
 };
 
+function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [hover, setHover] = useState(0);
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((s) => (
+        <button
+          key={s}
+          type="button"
+          onClick={() => onChange(s)}
+          onMouseEnter={() => setHover(s)}
+          onMouseLeave={() => setHover(0)}
+          className="text-3xl transition-transform hover:scale-110"
+        >
+          <Star className={`w-8 h-8 ${(hover || value) >= s ? "fill-amber-400 text-amber-400" : "text-gray-300"}`} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -22,6 +42,10 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [missingPhone, setMissingPhone] = useState(false);
+  const [reviewModal, setReviewModal] = useState<{ bookingId: string; teacherName: string } | null>(null);
+  const [starRating, setStarRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -47,7 +71,7 @@ export default function DashboardPage() {
     }
   }, [session]);
 
-  const handleAction = async (bookingId: string, newStatus: "CONFIRMED" | "CANCELLED") => {
+  const handleAction = async (bookingId: string, newStatus: "CONFIRMED" | "CANCELLED" | "COMPLETED") => {
     setActionLoading(bookingId + newStatus);
     const res = await fetch(`/api/bookings/${bookingId}`, {
       method: "PATCH",
@@ -63,12 +87,34 @@ export default function DashboardPage() {
     setActionLoading(null);
   };
 
+  const handleSubmitReview = async () => {
+    if (!reviewModal || starRating === 0) { alert("請選擇星數"); return; }
+    setSubmittingReview(true);
+    const res = await fetch("/api/reviews", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bookingId: reviewModal.bookingId, rating: starRating, comment: reviewComment }),
+    });
+    if (res.ok) {
+      setBookings((prev) => prev.map((b) => b.id === reviewModal.bookingId ? { ...b, review: { id: "done" } } : b));
+      setReviewModal(null);
+      setStarRating(0);
+      setReviewComment("");
+      alert("感謝您的評價！");
+    } else {
+      const err = await res.json().catch(() => ({}));
+      alert(`評價失敗：${err.message}`);
+    }
+    setSubmittingReview(false);
+  };
+
   if (status === "loading" || !session) return null;
 
   const isTeacher = session.user.role === "TEACHER";
   const upcoming = bookings.filter((b) => b.status === "CONFIRMED" && new Date(b.startTime) > new Date());
   const pending = bookings.filter((b) => b.status === "PENDING");
   const past = bookings.filter((b) => b.status === "COMPLETED");
+  const now = new Date();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -147,6 +193,8 @@ export default function DashboardPage() {
                 const Icon = st.icon;
                 const canJoin = booking.status === "CONFIRMED";
                 const otherPerson = isTeacher ? booking.student : booking.teacher;
+                const isPastConfirmed = booking.status === "CONFIRMED" && new Date(booking.endTime) < now;
+                const canReview = !isTeacher && booking.status === "COMPLETED" && !booking.review;
 
                 return (
                   <div key={booking.id} className="px-6 py-4 flex items-center gap-4">
@@ -170,8 +218,14 @@ export default function DashboardPage() {
                           📞 老師電話：{booking.teacher.teacherProfile.phone}
                         </div>
                       )}
+                      {!isTeacher && booking.status === "COMPLETED" && booking.review && (
+                        <div className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                          <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                          已評價
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap justify-end">
                       {/* 老師看到待確認時顯示接受/拒絕 */}
                       {isTeacher && booking.status === "PENDING" && (
                         <>
@@ -191,6 +245,18 @@ export default function DashboardPage() {
                           </button>
                         </>
                       )}
+                      {/* 老師可標記已完成（課程結束後） */}
+                      {isTeacher && isPastConfirmed && (
+                        <button
+                          onClick={() => {
+                            if (confirm("確定要標記此課程為「已完成」？")) handleAction(booking.id, "COMPLETED");
+                          }}
+                          disabled={!!actionLoading}
+                          className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 font-medium"
+                        >
+                          標記完成
+                        </button>
+                      )}
                       {canJoin && (
                         <Link
                           href={`/room/${booking.id}`}
@@ -200,6 +266,20 @@ export default function DashboardPage() {
                           進入教室
                         </Link>
                       )}
+                      {/* 學生評價按鈕 */}
+                      {canReview && (
+                        <button
+                          onClick={() => {
+                            setReviewModal({ bookingId: booking.id, teacherName: booking.teacher?.name });
+                            setStarRating(0);
+                            setReviewComment("");
+                          }}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg"
+                        >
+                          <Star className="w-4 h-4" />
+                          評價老師
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -208,6 +288,51 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* 評價 Modal */}
+      {reviewModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+            <h3 className="text-xl font-bold mb-1">評價老師</h3>
+            <p className="text-gray-500 text-sm mb-6">評價 {reviewModal.teacherName} 老師的課程</p>
+
+            <div className="mb-5">
+              <label className="block text-sm font-medium text-gray-700 mb-2">請給星數評分</label>
+              <StarPicker value={starRating} onChange={setStarRating} />
+              <p className="text-sm text-gray-400 mt-1">
+                {starRating === 1 ? "😞 很差" : starRating === 2 ? "😐 普通" : starRating === 3 ? "🙂 還不錯" : starRating === 4 ? "😊 很好" : starRating === 5 ? "🤩 非常棒！" : "點選星星評分"}
+              </p>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">留下評論（選填）</label>
+              <textarea
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                className="input resize-none"
+                rows={4}
+                placeholder="分享您的上課心得，幫助其他家長了解這位老師..."
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setReviewModal(null)}
+                className="flex-1 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleSubmitReview}
+                disabled={submittingReview || starRating === 0}
+                className="flex-1 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-bold rounded-lg"
+              >
+                {submittingReview ? "送出中..." : "送出評價"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

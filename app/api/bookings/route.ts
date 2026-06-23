@@ -24,6 +24,7 @@ export async function GET() {
           teacherProfile: { select: { phone: true, photoUrl: true } },
         },
       },
+      review: { select: { id: true } },
     },
     orderBy: { startTime: "desc" },
   });
