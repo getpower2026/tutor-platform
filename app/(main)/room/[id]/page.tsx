@@ -25,6 +25,7 @@ export default function RoomPage() {
   const lastDrawTime = useRef(0);
   const lastSeenTs = useRef(0);
   const uploading = useRef(false);
+  const forceDownload = useRef(false);
 
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
@@ -60,7 +61,7 @@ export default function RoomPage() {
     const canvas = canvasRef.current;
     if (!canvas || uploading.current) return;
     uploading.current = true;
-    const data = canvas.toDataURL("image/png");
+    const data = canvas.toDataURL("image/jpeg", 0.7);
     try {
       await fetch(`/api/whiteboard/${id}`, {
         method: "POST",
@@ -74,8 +75,8 @@ export default function RoomPage() {
 
   // ── Poll DB every 500ms, apply if newer and not drawing ──
   const poll = useCallback(async () => {
-    // 自己畫完後 2 秒內不拉取，避免覆蓋剛畫的內容
-    if (Date.now() - lastDrawTime.current < 2000) return;
+    if (!forceDownload.current && Date.now() - lastDrawTime.current < 2000) return;
+    forceDownload.current = false;
     const res = await fetch(`/api/whiteboard/${id}`).catch(() => null);
     if (!res) return;
     const { data, updatedAt } = await res.json();
@@ -94,13 +95,13 @@ export default function RoomPage() {
 
   useEffect(() => {
     const t = setTimeout(() => { initCanvas(); poll(); }, 200);
-    const interval = setInterval(poll, 500);
+    const interval = setInterval(poll, 300);
     return () => { clearTimeout(t); clearInterval(interval); };
   }, [initCanvas, poll]);
 
   useEffect(() => {
     if (tab === "whiteboard") {
-      setTimeout(() => { initCanvas(); lastSeenTs.current = 0; poll(); }, 50);
+      setTimeout(() => { initCanvas(); lastSeenTs.current = 0; forceDownload.current = true; poll(); }, 50);
     }
   }, [tab, initCanvas, poll]);
 
