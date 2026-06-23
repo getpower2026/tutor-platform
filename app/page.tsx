@@ -28,6 +28,15 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* 免費聲明 */}
+      <section className="bg-red-600 text-white py-5 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-lg font-bold tracking-wide">
+            ⚠️ 注意！本平台不收任何費用，免費提供。家長與老師請自行談妥費用進行收費。
+          </p>
+        </div>
+      </section>
+
       {/* How it works */}
       <section className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
