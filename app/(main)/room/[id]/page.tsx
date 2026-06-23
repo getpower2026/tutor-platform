@@ -52,7 +52,7 @@ export default function RoomPage() {
       await call.join({
         url: `https://${process.env.NEXT_PUBLIC_DAILY_DOMAIN}/${roomName}`,
         token,
-        userName: session.user.name || "使用者",
+        userName: session?.user?.name || "使用者",
       });
     }
 
