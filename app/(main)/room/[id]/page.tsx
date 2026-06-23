@@ -24,6 +24,7 @@ export default function RoomPage() {
   const drawing = useRef(false);
   const lastPos = useRef<{ x: number; y: number } | null>(null);
   const dirty = useRef(false);
+  const lastDrawTime = useRef(0);
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
   const [wbTool, setWbTool] = useState<"pen" | "eraser">("pen");
@@ -64,6 +65,7 @@ export default function RoomPage() {
 
   const download = useCallback(async () => {
     if (dirty.current) return;
+    if (Date.now() - lastDrawTime.current < 3000) return;
     const res = await fetch(`/api/whiteboard/${id}`).catch(() => null);
     if (!res) return;
     const { data } = await res.json();
@@ -108,7 +110,7 @@ export default function RoomPage() {
     ctx.strokeStyle = wbTool === "eraser" ? "#ffffff" : color;
     ctx.lineWidth = wbTool === "eraser" ? size * 4 : size;
     ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.stroke();
-    lastPos.current = pos; dirty.current = true;
+    lastPos.current = pos; dirty.current = true; lastDrawTime.current = Date.now();
   };
 
   const stopDraw = (e: React.MouseEvent | React.TouchEvent) => {
