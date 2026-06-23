@@ -24,6 +24,7 @@ export default function RoomPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   const lastPos = useRef<{ x: number; y: number } | null>(null);
+  const strokePath = useRef<{ px: number; py: number; x: number; y: number }[]>([]);
   const dirty = useRef(false);
   const lastDrawTime = useRef(0);
   const pusherRef = useRef<Pusher | null>(null);
@@ -83,7 +84,7 @@ export default function RoomPage() {
     img.src = data;
   }, [id]);
 
-  // 在 canvas 上畫一條遠端筆跡（座標為 0~1 正規化比例）
+  // 在 canvas 上畫遠端筆跡（座標為 0~1 正規化比例）
   const applyStroke = useCallback((data: any) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -93,18 +94,18 @@ export default function RoomPage() {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       return;
     }
-    const x = data.x * canvas.width;
-    const y = data.y * canvas.height;
-    const px = data.px * canvas.width;
-    const py = data.py * canvas.height;
-    ctx.beginPath();
-    ctx.moveTo(px, py);
-    ctx.lineTo(x, y);
-    ctx.strokeStyle = data.tool === "eraser" ? "#ffffff" : data.color;
-    ctx.lineWidth = data.tool === "eraser" ? data.size * 4 : data.size;
+    const { path, color, size, tool } = data;
+    if (!path || path.length === 0) return;
+    ctx.strokeStyle = tool === "eraser" ? "#ffffff" : color;
+    ctx.lineWidth = tool === "eraser" ? size * 4 : size;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.stroke();
+    for (const seg of path) {
+      ctx.beginPath();
+      ctx.moveTo(seg.px * canvas.width, seg.py * canvas.height);
+      ctx.lineTo(seg.x * canvas.width, seg.y * canvas.height);
+      ctx.stroke();
+    }
   }, []);
 
   // Pusher 訂閱
@@ -147,7 +148,7 @@ export default function RoomPage() {
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   };
 
-  const startDraw = (e: React.MouseEvent | React.TouchEvent) => { e.preventDefault(); drawing.current = true; lastPos.current = getPos(e); };
+  const startDraw = (e: React.MouseEvent | React.TouchEvent) => { e.preventDefault(); drawing.current = true; lastPos.current = getPos(e); strokePath.current = []; };
 
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
@@ -160,20 +161,25 @@ export default function RoomPage() {
     ctx.strokeStyle = wbTool === "eraser" ? "#ffffff" : color;
     ctx.lineWidth = wbTool === "eraser" ? size * 4 : size;
     ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.stroke();
-    lastPos.current = pos; dirty.current = true; lastDrawTime.current = Date.now();
-    // 即時廣播（座標正規化為 0~1 比例）
     const cw = canvasRef.current!.width;
     const ch = canvasRef.current!.height;
-    fetch(`/api/whiteboard/${id}/stroke`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ px: px / cw, py: py / ch, x: pos.x / cw, y: pos.y / ch, color, size, tool: wbTool }),
-    }).catch(() => {});
+    strokePath.current.push({ px: px / cw, py: py / ch, x: pos.x / cw, y: pos.y / ch });
+    lastPos.current = pos; dirty.current = true; lastDrawTime.current = Date.now();
   };
 
   const stopDraw = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault(); drawing.current = false; lastPos.current = null;
     if (dirty.current) upload();
+    // 放開手指/滑鼠時才送出整條筆跡
+    if (strokePath.current.length > 0) {
+      const path = strokePath.current;
+      strokePath.current = [];
+      fetch(`/api/whiteboard/${id}/stroke`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path, color, size, tool: wbTool }),
+      }).catch(() => {});
+    }
   };
 
   const clearCanvas = () => {
