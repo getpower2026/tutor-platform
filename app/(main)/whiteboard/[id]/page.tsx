@@ -52,6 +52,7 @@ export default function WhiteboardPage() {
 
   // 初始化 canvas 白色背景
   useEffect(() => {
+    document.body.style.overflow = "hidden";
     const canvas = canvasRef.current;
     if (!canvas) return;
     canvas.width = canvas.offsetWidth;
@@ -117,6 +118,10 @@ export default function WhiteboardPage() {
     await upload();
   };
 
+  const resetView = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  };
+
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#f3f4f6" }}>
       {/* 工具列 */}
@@ -149,11 +154,18 @@ export default function WhiteboardPage() {
           ))}
         </div>
 
-        <button onClick={clearCanvas}
-          style={{ marginLeft: "auto", padding: "4px 12px", background: "#ef4444", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
-        >
-          清除白板
-        </button>
+        <div style={{ marginLeft: "auto", display: "flex", gap: "6px" }}>
+          <button onClick={resetView}
+            style={{ padding: "4px 12px", background: "#374151", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px" }}
+          >
+            ⬆ 回到頂端
+          </button>
+          <button onClick={clearCanvas}
+            style={{ padding: "4px 12px", background: "#ef4444", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
+          >
+            清除白板
+          </button>
+        </div>
       </div>
 
       {/* 畫布 */}
