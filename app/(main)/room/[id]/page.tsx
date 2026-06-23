@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Loader2, PhoneOff, Video, PenLine } from "lucide-react";
+import { Loader2, PhoneOff, Video, PenLine, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import Pusher from "pusher-js";
 
 const COLORS = ["#000000", "#ef4444", "#3b82f6", "#22c55e", "#f59e0b", "#8b5cf6", "#ec4899", "#ffffff"];
@@ -24,47 +24,45 @@ export default function RoomPage() {
   const drawing = useRef(false);
   const lastPos = useRef<{ x: number; y: number } | null>(null);
   const pendingPoints = useRef<{ px: number; py: number; x: number; y: number }[]>([]);
+  const channelRef = useRef<any>(null);
 
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(5);
   const [wbTool, setWbTool] = useState<"pen" | "eraser">("pen");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  // 用 ref 讓計時器拿到最新的 color/size/wbTool
   const colorRef = useRef(color);
   const sizeRef = useRef(size);
   const toolRef = useRef(wbTool);
+  const currentPageRef = useRef(currentPage);
   useEffect(() => { colorRef.current = color; }, [color]);
   useEffect(() => { sizeRef.current = size; }, [size]);
   useEffect(() => { toolRef.current = wbTool; }, [wbTool]);
+  useEffect(() => { currentPageRef.current = currentPage; }, [currentPage]);
 
   useEffect(() => {
     if (!session) return;
-    fetch(`/api/rooms/${id}`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.message) { setError(d.message); return; }
-        setRoomUrl(`https://${process.env.NEXT_PUBLIC_DAILY_DOMAIN}/${d.roomName}?t=${d.token}`);
-      });
+    fetch(`/api/rooms/${id}`).then((r) => r.json()).then((d) => {
+      if (d.message) { setError(d.message); return; }
+      setRoomUrl(`https://${process.env.NEXT_PUBLIC_DAILY_DOMAIN}/${d.roomName}?t=${d.token}`);
+    });
   }, [id, session]);
 
-  // ── Canvas init ──
   const initCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const w = window.innerWidth;
     const h = window.innerHeight - 88;
-    canvas.width = w;
-    canvas.height = h;
-    canvas.style.width = w + "px";
-    canvas.style.height = h + "px";
+    canvas.width = w; canvas.height = h;
+    canvas.style.width = w + "px"; canvas.style.height = h + "px";
     const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, w, h);
   }, []);
 
-  // ── 載入 DB 初始狀態 ──
-  const loadFromDb = useCallback(async () => {
-    const res = await fetch(`/api/whiteboard/${id}`).catch(() => null);
+  const loadPage = useCallback(async (page: number) => {
+    initCanvas();
+    const res = await fetch(`/api/whiteboard/${id}?page=${page}`).catch(() => null);
     if (!res) return;
     const { data } = await res.json();
     if (!data) return;
@@ -74,33 +72,36 @@ export default function RoomPage() {
     const img = new Image();
     img.onload = () => { ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(img, 0, 0, canvas.width, canvas.height); };
     img.src = data;
-  }, [id]);
+  }, [id, initCanvas]);
 
-  // ── 存 DB（每 5 秒備份，供後來者載入初始狀態）──
-  const saveToDb = useCallback(() => {
+  const savePage = useCallback((page: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const data = canvas.toDataURL("image/jpeg", 0.7);
-    fetch(`/api/whiteboard/${id}`, {
+    fetch(`/api/whiteboard/${id}?page=${page}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ data }),
     }).catch(() => {});
   }, [id]);
 
+  const fetchPageCount = useCallback(async () => {
+    const res = await fetch(`/api/whiteboard/${id}`, { method: "PATCH" }).catch(() => null);
+    if (!res) return;
+    const { pages } = await res.json();
+    setTotalPages(Math.max(...pages, 1));
+  }, [id]);
+
   useEffect(() => {
-    const t = setTimeout(() => { initCanvas(); loadFromDb(); }, 200);
-    const backup = setInterval(saveToDb, 5000);
+    const t = setTimeout(() => { fetchPageCount(); loadPage(1); }, 200);
+    const backup = setInterval(() => savePage(currentPageRef.current), 5000);
     return () => { clearTimeout(t); clearInterval(backup); };
-  }, [initCanvas, loadFromDb, saveToDb]);
+  }, [fetchPageCount, loadPage, savePage]);
 
   useEffect(() => {
-    if (tab === "whiteboard") {
-      setTimeout(() => { initCanvas(); loadFromDb(); }, 50);
-    }
-  }, [tab, initCanvas, loadFromDb]);
+    if (tab === "whiteboard") setTimeout(() => loadPage(currentPage), 50);
+  }, [tab, loadPage, currentPage]);
 
-  // ── 在 canvas 畫一段筆跡 ──
   const drawSegments = useCallback((segments: any[], c: string, s: number, t: string) => {
     const canvas = canvasRef.current;
     if (!canvas || segments.length === 0) return;
@@ -115,9 +116,6 @@ export default function RoomPage() {
       ctx.stroke();
     }
   }, []);
-
-  // ── Pusher 訂閱（private channel + client events）──
-  const channelRef = useRef<any>(null);
 
   useEffect(() => {
     if (!session) return;
@@ -135,26 +133,27 @@ export default function RoomPage() {
         ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
         return;
       }
+      if (data.type === "page-change") {
+        setCurrentPage(data.page);
+        setTotalPages((p) => Math.max(p, data.page));
+        setTimeout(() => loadPage(data.page), 50);
+        return;
+      }
       drawSegments(data.points, data.color, data.size, data.tool);
     });
     return () => { channel.unbind_all(); pusher.unsubscribe(`private-whiteboard-${id}`); pusher.disconnect(); channelRef.current = null; };
-  }, [id, session, drawSegments]);
+  }, [id, session, drawSegments, loadPage]);
 
-  // ── 每 50ms 批次送出（直接從瀏覽器送，不經過伺服器）──
   useEffect(() => {
     const flush = setInterval(() => {
-      if (pendingPoints.current.length === 0) return;
-      if (!channelRef.current) return;
+      if (pendingPoints.current.length === 0 || !channelRef.current) return;
       const points = pendingPoints.current;
       pendingPoints.current = [];
-      channelRef.current.trigger("client-stroke", {
-        points, color: colorRef.current, size: sizeRef.current, tool: toolRef.current,
-      });
+      channelRef.current.trigger("client-stroke", { points, color: colorRef.current, size: sizeRef.current, tool: toolRef.current });
     }, 50);
     return () => clearInterval(flush);
   }, []);
 
-  // ── 畫圖事件 ──
   const getPos = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current!;
     const rect = canvas.getBoundingClientRect();
@@ -162,9 +161,7 @@ export default function RoomPage() {
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   };
 
-  const startDraw = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault(); drawing.current = true; lastPos.current = getPos(e);
-  };
+  const startDraw = (e: React.MouseEvent | React.TouchEvent) => { e.preventDefault(); drawing.current = true; lastPos.current = getPos(e); };
 
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
@@ -177,27 +174,40 @@ export default function RoomPage() {
     ctx.strokeStyle = wbTool === "eraser" ? "#ffffff" : color;
     ctx.lineWidth = wbTool === "eraser" ? size * 4 : size;
     ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.stroke();
-    // 積累到 buffer，50ms 後批次送出
     pendingPoints.current.push({ px: px / canvas.width, py: py / canvas.height, x: pos.x / canvas.width, y: pos.y / canvas.height });
     lastPos.current = pos;
   };
 
-  const stopDraw = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    if (!drawing.current) return;
-    drawing.current = false; lastPos.current = null;
-  };
+  const stopDraw = (e: React.MouseEvent | React.TouchEvent) => { e.preventDefault(); drawing.current = false; lastPos.current = null; };
 
   const clearCanvas = () => {
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
     ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
     channelRef.current?.trigger("client-stroke", { type: "clear" });
-    saveToDb();
+    savePage(currentPage);
+  };
+
+  const switchPage = (page: number) => {
+    savePage(currentPage);
+    setCurrentPage(page);
+    loadPage(page);
+    channelRef.current?.trigger("client-stroke", { type: "page-change", page });
+  };
+
+  const addPage = () => {
+    savePage(currentPage);
+    const newPage = totalPages + 1;
+    setTotalPages(newPage);
+    setCurrentPage(newPage);
+    initCanvas();
+    savePage(newPage);
+    channelRef.current?.trigger("client-stroke", { type: "page-change", page: newPage });
   };
 
   const handleComplete = async () => {
     setCompleting(true);
+    savePage(currentPage);
     await fetch(`/api/bookings/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "COMPLETED" }) }).catch(() => {});
     router.push("/dashboard");
   };
@@ -212,6 +222,7 @@ export default function RoomPage() {
 
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: "#111", overflow: "hidden" }}>
+      {/* Header */}
       <div style={{ background: "#1f2937", padding: "6px 12px", display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
         <span style={{ color: "white", fontWeight: "bold", fontSize: "14px", marginRight: "4px" }}>TutorLink 視訊教室</span>
         <button onClick={() => setTab("video")} style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 10px", background: tab === "video" ? "#4f46e5" : "#374151", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px" }}>
@@ -226,8 +237,9 @@ export default function RoomPage() {
         </button>
       </div>
 
+      {/* 白板工具列 */}
       {tab === "whiteboard" && (
-        <div style={{ background: "#374151", padding: "4px 10px", display: "flex", alignItems: "center", gap: "8px", flexShrink: 0, overflowX: "auto" }}>
+        <div style={{ background: "#374151", padding: "4px 10px", display: "flex", alignItems: "center", gap: "6px", flexShrink: 0, overflowX: "auto" }}>
           <button onClick={() => setWbTool("pen")} style={{ padding: "3px 8px", background: wbTool === "pen" ? "#3b82f6" : "#4b5563", color: "white", border: "none", borderRadius: "5px", cursor: "pointer", fontSize: "12px" }}>筆</button>
           <button onClick={() => setWbTool("eraser")} style={{ padding: "3px 8px", background: wbTool === "eraser" ? "#3b82f6" : "#4b5563", color: "white", border: "none", borderRadius: "5px", cursor: "pointer", fontSize: "12px" }}>橡皮擦</button>
           {COLORS.map((c) => (
@@ -237,10 +249,29 @@ export default function RoomPage() {
           {SIZES.map((s) => (
             <button key={s} onClick={() => setSize(s)} style={{ width: 28, height: 24, background: size === s ? "#3b82f6" : "#4b5563", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "11px", flexShrink: 0 }}>{s}</button>
           ))}
-          <button onClick={clearCanvas} style={{ marginLeft: "auto", padding: "3px 8px", background: "#ef4444", color: "white", border: "none", borderRadius: "5px", cursor: "pointer", fontSize: "12px", flexShrink: 0 }}>清除</button>
+
+          {/* 頁面控制 */}
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+            <button onClick={() => currentPage > 1 && switchPage(currentPage - 1)} disabled={currentPage <= 1}
+              style={{ padding: "3px 5px", background: "#4b5563", color: "white", border: "none", borderRadius: "5px", cursor: currentPage > 1 ? "pointer" : "not-allowed", opacity: currentPage <= 1 ? 0.4 : 1 }}>
+              <ChevronLeft style={{ width: 14, height: 14 }} />
+            </button>
+            <span style={{ color: "white", fontSize: "12px", minWidth: "50px", textAlign: "center" }}>第 {currentPage} / {totalPages} 頁</span>
+            <button onClick={() => currentPage < totalPages && switchPage(currentPage + 1)} disabled={currentPage >= totalPages}
+              style={{ padding: "3px 5px", background: "#4b5563", color: "white", border: "none", borderRadius: "5px", cursor: currentPage < totalPages ? "pointer" : "not-allowed", opacity: currentPage >= totalPages ? 0.4 : 1 }}>
+              <ChevronRight style={{ width: 14, height: 14 }} />
+            </button>
+            {isTeacher && (
+              <button onClick={addPage} style={{ display: "flex", alignItems: "center", gap: "2px", padding: "3px 8px", background: "#22c55e", color: "white", border: "none", borderRadius: "5px", cursor: "pointer", fontSize: "12px" }}>
+                <Plus style={{ width: 12, height: 12 }} /> 新增頁面
+              </button>
+            )}
+            <button onClick={clearCanvas} style={{ padding: "3px 8px", background: "#ef4444", color: "white", border: "none", borderRadius: "5px", cursor: "pointer", fontSize: "12px" }}>清除</button>
+          </div>
         </div>
       )}
 
+      {/* 內容區 */}
       <div style={{ flex: 1, position: "relative", minHeight: 0 }}>
         {roomUrl && (
           <iframe src={roomUrl} allow="camera; microphone; fullscreen; speaker; display-capture; autoplay"
@@ -254,6 +285,7 @@ export default function RoomPage() {
         </div>
       </div>
 
+      {/* Leave Modal */}
       {leaveModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "16px" }}>
           <div style={{ background: "white", borderRadius: "20px", padding: "28px", width: "100%", maxWidth: "380px", textAlign: "center" }}>
@@ -274,7 +306,7 @@ export default function RoomPage() {
               <>
                 <div style={{ fontSize: "44px", marginBottom: "10px" }}>👋</div>
                 <h3 style={{ fontSize: "20px", fontWeight: "bold", marginBottom: "8px" }}>要離開教室嗎？</h3>
-                <p style={{ color: "#6b7280", fontSize: "13px", marginBottom: "20px" }}>課程結束後可在控制台評價老師。</p>
+                <p style={{ color: "#6b7280", fontSize: "13px", marginBottom: "20px" }}>課程結束後可在控制台查看白板筆記。</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   <button onClick={() => router.push("/dashboard")} style={{ padding: "13px", background: "#ef4444", color: "white", fontWeight: "bold", fontSize: "15px", border: "none", borderRadius: "12px", cursor: "pointer" }}>離開教室</button>
                   <button onClick={() => setLeaveModal(false)} style={{ padding: "8px", background: "transparent", color: "#9ca3af", fontSize: "12px", border: "none", cursor: "pointer" }}>取消，繼續上課</button>

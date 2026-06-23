@@ -278,6 +278,13 @@ export default function DashboardPage() {
                           進入教室
                         </Link>
                       )}
+                      {/* 查看白板筆記 */}
+                      {booking.status === "COMPLETED" && (
+                        <Link href={`/whiteboard/${booking.id}`}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 text-sm font-medium rounded-lg">
+                          📓 白板筆記
+                        </Link>
+                      )}
                       {/* 學生評價按鈕 */}
                       {canReview && (
                         <button

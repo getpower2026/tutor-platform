@@ -91,9 +91,12 @@ model Booking {
 }
 
 model WhiteboardData {
-  bookingId String   @id
+  bookingId String
+  page      Int      @default(1)
   data      String   @db.Text
   updatedAt DateTime @updatedAt
+
+  @@id([bookingId, page])
 }
 
 model Review {
