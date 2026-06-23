@@ -82,6 +82,9 @@ function RegisterForm() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input {...register("email", { required: "請輸入 Email" })} type="email" className="input" placeholder="your@email.com" />
             {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+            {role === "TEACHER" && (
+              <p className="text-red-600 text-xs mt-1 font-medium">⚠️ 老師請填寫常用信箱，當學生預約上課時，系統將以此 Email 通知您。</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">密碼</label>
