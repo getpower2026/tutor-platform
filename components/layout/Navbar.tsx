@@ -20,8 +20,8 @@ export function Navbar() {
             <Link href="/teachers" className="text-gray-600 hover:text-gray-900 font-medium text-xs sm:text-base">
               尋找老師
             </Link>
-            <Link href="/guide" className="text-gray-600 hover:text-gray-900 font-medium text-xs sm:text-base">
-              上課說明
+            <Link href="/guide" className="bg-amber-400 hover:bg-amber-500 text-amber-900 font-bold text-xs sm:text-sm px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg transition-colors">
+              📖 上課說明
             </Link>
 
             {session ? (
