@@ -5,7 +5,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { TeacherCard } from "@/components/teacher/TeacherCard";
 import { Search, SlidersHorizontal } from "lucide-react";
 
-const SUBJECTS = ["數學", "英文", "物理", "化學", "中文", "日文", "程式設計", "音樂", "美術"];
+const SUBJECTS = ["國文", "英文", "數學", "社會", "歷史", "地理", "公民", "自然", "物理", "化學", "生物", "地科", "理化", "全民英檢", "多益", "劍橋英檢"];
 
 export default function TeachersPage() {
   const [teachers, setTeachers] = useState<any[]>([]);
