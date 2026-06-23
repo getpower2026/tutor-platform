@@ -75,26 +75,19 @@ export default function RoomPage() {
         )}
 
         {/* 白板頁碼選擇器 */}
-        <div style={{ position: "relative" }}>
-          <button
-            onClick={() => setShowPages((v) => !v)}
-            style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 12px", background: "#7c3aed", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
+        <div style={{ display: "flex", alignItems: "center", gap: "4px", padding: "3px 4px 3px 10px", background: "#7c3aed", borderRadius: "6px" }}>
+          <PenLine style={{ width: 14, height: 14, color: "white", flexShrink: 0 }} />
+          <span style={{ color: "white", fontSize: "13px", fontWeight: "bold", whiteSpace: "nowrap" }}>白板</span>
+          <select
+            defaultValue=""
+            onChange={(e) => { if (e.target.value) { openPage(Number(e.target.value)); e.currentTarget.value = ""; } }}
+            style={{ background: "#7c3aed", color: "white", border: "none", fontSize: "13px", fontWeight: "bold", cursor: "pointer", outline: "none", padding: "4px 2px" }}
           >
-            <PenLine style={{ width: 14, height: 14 }} /> 白板 ▾
-          </button>
-          {showPages && (
-            <div style={{ position: "absolute", top: "110%", left: 0, background: "#1f2937", border: "1px solid #374151", borderRadius: "8px", padding: "6px", zIndex: 100, display: "flex", flexDirection: "column", gap: "2px", minWidth: "130px", maxHeight: "320px", overflowY: "auto" }}>
-              {Array.from({ length: TOTAL_PAGES }, (_, i) => i + 1).map((p) => (
-                <button key={p} onClick={() => openPage(p)}
-                  style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 12px", background: "transparent", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", textAlign: "left", whiteSpace: "nowrap" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "#374151")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                >
-                  📄 第 {p} 頁
-                </button>
-              ))}
-            </div>
-          )}
+            <option value="" disabled>選頁</option>
+            {Array.from({ length: TOTAL_PAGES }, (_, i) => i + 1).map((p) => (
+              <option key={p} value={p}>第 {p} 頁</option>
+            ))}
+          </select>
         </div>
 
         <button
