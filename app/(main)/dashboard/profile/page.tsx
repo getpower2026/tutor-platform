@@ -64,21 +64,35 @@ export default function TeacherProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    // show preview immediately
     const localUrl = URL.createObjectURL(file);
     setPhotoUrl(localUrl);
-    const formData = new FormData();
-    formData.append("file", file);
-    const res = await fetch("/api/upload", { method: "POST", body: formData });
-    if (res.ok) {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(`照片上傳失敗：${err.message || res.status}，請重試`);
+        setPhotoUrl("");
+        setUploading(false);
+        return;
+      }
       const { url } = await res.json();
       setPhotoUrl(url);
-      // save photo immediately so mobile page jump doesn't lose it
-      await fetch(`/api/teachers/${session?.user.id}`, {
+      // save immediately to DB
+      const patchRes = await fetch(`/api/teachers/${session?.user.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ photoUrl: url }),
       });
+      if (patchRes.ok) {
+        alert("照片已儲存成功！");
+      } else {
+        alert("照片上傳成功，但儲存失敗，請按「儲存」再試一次");
+      }
+    } catch (err) {
+      alert(`發生錯誤：${err}，請重試`);
+      setPhotoUrl("");
     }
     setUploading(false);
   };
