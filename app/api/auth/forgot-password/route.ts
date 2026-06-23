@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Resend } from "resend";
+import { sendMail } from "@/lib/mailer";
 import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
@@ -21,11 +21,9 @@ export async function POST(req: Request) {
     data: { resetToken: token, resetTokenExpiry: expiry },
   });
 
-  if (process.env.RESEND_API_KEY) {
-    const resend = new Resend(process.env.RESEND_API_KEY);
+  if (process.env.GMAIL_USER) {
     const resetUrl = `https://www.tutorlink.cc/reset-password/${token}`;
-    await resend.emails.send({
-      from: "TutorLink <onboarding@resend.dev>",
+    await sendMail({
       to: email,
       subject: "【TutorLink】重設密碼",
       html: `

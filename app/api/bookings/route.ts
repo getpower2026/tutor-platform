@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Resend } from "resend";
+import { sendMail } from "@/lib/mailer";
 
 export const dynamic = 'force-dynamic';
 
@@ -57,12 +57,10 @@ export async function POST(req: Request) {
 
   // 發信通知老師
   const teacherEmail = (teacher as any).user?.email;
-  if (teacherEmail && process.env.RESEND_API_KEY) {
-    const resend = new Resend(process.env.RESEND_API_KEY);
+  if (teacherEmail && process.env.GMAIL_USER) {
     const start = new Date(startTime);
     const dateStr = start.toLocaleString("zh-TW", { timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
-    await resend.emails.send({
-      from: "TutorLink <onboarding@resend.dev>",
+    await sendMail({
       to: teacherEmail,
       subject: "【TutorLink】您有新的預約通知",
       html: `

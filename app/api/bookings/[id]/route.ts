@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Resend } from "resend";
+import { sendMail } from "@/lib/mailer";
 
 export const dynamic = 'force-dynamic';
 
@@ -58,8 +58,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   });
 
   // 發信通知學生
-  if (process.env.RESEND_API_KEY && (status === "CONFIRMED" || status === "CANCELLED")) {
-    const resend = new Resend(process.env.RESEND_API_KEY);
+  if (process.env.GMAIL_USER && (status === "CONFIRMED" || status === "CANCELLED")) {
     const studentEmail = (booking as any).student?.email;
     const studentName = (booking as any).student?.name;
     const teacherName = (booking as any).teacher?.name;
@@ -68,8 +67,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     });
 
     if (studentEmail) {
-      await resend.emails.send({
-        from: "TutorLink <onboarding@resend.dev>",
+      await sendMail({
         to: studentEmail,
         subject: status === "CONFIRMED"
           ? "【TutorLink】老師已接受您的預約！"
