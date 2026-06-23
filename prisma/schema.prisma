@@ -90,6 +90,12 @@ model Booking {
   review      Review?
 }
 
+model WhiteboardData {
+  bookingId String   @id
+  data      String   @db.Text
+  updatedAt DateTime @updatedAt
+}
+
 model Review {
   id         String   @id @default(cuid())
   bookingId  String   @unique

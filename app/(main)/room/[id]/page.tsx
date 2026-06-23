@@ -10,7 +10,6 @@ export default function RoomPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const [roomUrl, setRoomUrl] = useState("");
-  const [whiteboardUrl, setWhiteboardUrl] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -22,10 +21,6 @@ export default function RoomPage() {
         if (d.message) { setError(d.message); return; }
         setRoomUrl(`https://${process.env.NEXT_PUBLIC_DAILY_DOMAIN}/${d.roomName}?t=${d.token}`);
       });
-
-    // Witeboard：用 booking ID 的前 20 碼當房間 ID，自動建立、無需帳號
-    const wbId = (id as string).replace(/[^a-zA-Z0-9]/g, "").slice(0, 20);
-    setWhiteboardUrl(`https://witeboard.com/${wbId}`);
   }, [id, session]);
 
   if (error) return (
@@ -43,22 +38,20 @@ export default function RoomPage() {
       <div style={{ background: "#1f2937", padding: "8px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
         <span style={{ color: "white", fontWeight: "bold" }}>TutorLink 視訊教室</span>
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          {whiteboardUrl && (
-            <a
-              href={whiteboardUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "flex", alignItems: "center", gap: "6px",
-                background: "#7c3aed", color: "white", padding: "6px 14px",
-                borderRadius: "8px", fontSize: "14px", fontWeight: "bold",
-                textDecoration: "none",
-              }}
-            >
-              <PenLine style={{ width: 16, height: 16 }} />
-              開啟白板（新分頁）
-            </a>
-          )}
+          <a
+            href={`/whiteboard/${id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "flex", alignItems: "center", gap: "6px",
+              background: "#7c3aed", color: "white", padding: "6px 14px",
+              borderRadius: "8px", fontSize: "14px", fontWeight: "bold",
+              textDecoration: "none",
+            }}
+          >
+            <PenLine style={{ width: 16, height: 16 }} />
+            開啟白板
+          </a>
           {!roomUrl && (
             <span style={{ color: "#9ca3af", fontSize: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
               <Loader2 style={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} />
