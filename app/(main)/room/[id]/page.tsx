@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import DailyIframe, { DailyCall } from "@daily-co/daily-js";
 import { Loader2, PhoneOff, Mic, MicOff, Video, VideoOff, Monitor, PenLine, VideoIcon } from "lucide-react";
 
 export default function RoomPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { data: session } = useSession();
   const containerRef = useRef<HTMLDivElement>(null);
   const callRef = useRef<DailyCall | null>(null);
   const [status, setStatus] = useState<"loading" | "joined" | "error">("loading");
@@ -48,6 +50,7 @@ export default function RoomPage() {
       await call.join({
         url: `https://${process.env.NEXT_PUBLIC_DAILY_DOMAIN}/${roomName}`,
         token,
+        userName: session?.user?.name || "使用者",
       });
     }
 
