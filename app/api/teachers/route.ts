@@ -18,7 +18,7 @@ export async function GET(req: Request) {
     include: {
       user: { select: { id: true, name: true, image: true } },
     },
-    orderBy: { rating: "desc" },
+    orderBy: { createdAt: "desc" },
   });
 
   return NextResponse.json(teachers);
