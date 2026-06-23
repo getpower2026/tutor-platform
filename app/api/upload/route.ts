@@ -17,6 +17,7 @@ export async function POST(req: Request) {
     const ext = file.name.split(".").pop() || "jpg";
     const blob = await put(`teachers/${session.user.id}.${ext}`, file, {
       access: "public",
+      allowOverwrite: true,
     });
     return NextResponse.json({ url: blob.url });
   } catch (err: any) {
