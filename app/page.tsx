@@ -33,7 +33,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-4">如何使用</h2>
           <p className="text-gray-500 text-center mb-12">三個簡單步驟，開始你的學習之旅</p>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="flex justify-center gap-16 flex-wrap">
             {[
               { icon: Search, step: "1", title: "搜尋老師", desc: "依科目、時段篩選，找到最適合的老師" },
               { icon: Video, step: "2", title: "預約上課", desc: "選擇時段，即刻確認預約，免費開始學習" },
