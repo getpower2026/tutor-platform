@@ -45,12 +45,15 @@ export default function RoomPage() {
   const initCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const rect = canvas.parentElement!.getBoundingClientRect();
-    canvas.width = rect.width;
-    canvas.height = rect.height;
+    const w = window.innerWidth;
+    const h = window.innerHeight - 88; // header + toolbar
+    canvas.width = w;
+    canvas.height = h;
+    canvas.style.width = w + "px";
+    canvas.style.height = h + "px";
     const ctx = canvas.getContext("2d")!;
     ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, w, h);
   }, []);
 
   const upload = useCallback(async () => {
@@ -80,7 +83,7 @@ export default function RoomPage() {
     img.src = data;
   }, [id]);
 
-  // 在 canvas 上畫一條遠端筆跡
+  // 在 canvas 上畫一條遠端筆跡（座標為 0~1 正規化比例）
   const applyStroke = useCallback((data: any) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -90,9 +93,13 @@ export default function RoomPage() {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       return;
     }
+    const x = data.x * canvas.width;
+    const y = data.y * canvas.height;
+    const px = data.px * canvas.width;
+    const py = data.py * canvas.height;
     ctx.beginPath();
-    ctx.moveTo(data.px, data.py);
-    ctx.lineTo(data.x, data.y);
+    ctx.moveTo(px, py);
+    ctx.lineTo(x, y);
     ctx.strokeStyle = data.tool === "eraser" ? "#ffffff" : data.color;
     ctx.lineWidth = data.tool === "eraser" ? data.size * 4 : data.size;
     ctx.lineCap = "round";
@@ -154,11 +161,13 @@ export default function RoomPage() {
     ctx.lineWidth = wbTool === "eraser" ? size * 4 : size;
     ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.stroke();
     lastPos.current = pos; dirty.current = true; lastDrawTime.current = Date.now();
-    // 即時廣播這段筆跡
+    // 即時廣播（座標正規化為 0~1 比例）
+    const cw = canvasRef.current!.width;
+    const ch = canvasRef.current!.height;
     fetch(`/api/whiteboard/${id}/stroke`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ px, py, x: pos.x, y: pos.y, color, size, tool: wbTool }),
+      body: JSON.stringify({ px: px / cw, py: py / ch, x: pos.x / cw, y: pos.y / ch, color, size, tool: wbTool }),
     }).catch(() => {});
   };
 
