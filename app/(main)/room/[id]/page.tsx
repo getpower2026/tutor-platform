@@ -30,6 +30,7 @@ export default function RoomPage() {
   }, []);
 
   useEffect(() => {
+    if (!session) return;
     let call: any;
 
     async function joinRoom() {
@@ -52,18 +53,20 @@ export default function RoomPage() {
       call.on("participant-joined", () => updateParticipants(call));
       call.on("participant-updated", () => updateParticipants(call));
       call.on("participant-left", () => updateParticipants(call));
+      call.on("track-started", () => updateParticipants(call));
+      call.on("track-stopped", () => updateParticipants(call));
       call.on("error", () => { setError("視訊連線錯誤"); setStatus("error"); });
 
       await call.join({
         url: `https://${process.env.NEXT_PUBLIC_DAILY_DOMAIN}/${roomName}`,
         token,
-        userName: session?.user?.name || "使用者",
+        userName: session.user.name || "使用者",
       });
     }
 
     joinRoom();
     return () => { call?.destroy(); };
-  }, [id]);
+  }, [id, session]);
 
   const toggleMute = () => {
     const next = !muted;
@@ -217,21 +220,27 @@ function ParticipantTile({ participant }: { participant: any }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  useEffect(() => {
-    if (videoRef.current && participant.tracks?.video?.persistentTrack) {
-      const stream = new MediaStream([participant.tracks.video.persistentTrack]);
-      videoRef.current.srcObject = stream;
-    }
-  }, [participant.tracks?.video?.persistentTrack]);
+  const videoTrack = participant.tracks?.video?.persistentTrack;
+  const audioTrack = participant.tracks?.audio?.persistentTrack;
+  const videoState = participant.tracks?.video?.state;
 
   useEffect(() => {
-    if (audioRef.current && !participant.local && participant.tracks?.audio?.persistentTrack) {
-      const stream = new MediaStream([participant.tracks.audio.persistentTrack]);
+    if (videoRef.current && videoTrack) {
+      const stream = new MediaStream([videoTrack]);
+      videoRef.current.srcObject = stream;
+    } else if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  }, [videoTrack]);
+
+  useEffect(() => {
+    if (audioRef.current && !participant.local && audioTrack) {
+      const stream = new MediaStream([audioTrack]);
       audioRef.current.srcObject = stream;
     }
-  }, [participant.tracks?.audio?.persistentTrack, participant.local]);
+  }, [audioTrack, participant.local]);
 
-  const isVideoOff = !participant.tracks?.video?.persistentTrack || participant.video === false;
+  const isVideoOff = !videoTrack || videoState === "off" || videoState === "blocked";
 
   return (
     <div className="relative bg-gray-700 rounded-xl overflow-hidden flex items-center justify-center">
