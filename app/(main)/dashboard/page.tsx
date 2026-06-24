@@ -238,6 +238,26 @@ export default function DashboardPage() {
                           取消預約
                         </button>
                       )}
+                      {/* 學生可刪除已完成或已取消的記錄 */}
+                      {!isTeacher && ["COMPLETED", "CANCELLED"].includes(booking.status) && (
+                        <button
+                          onClick={async () => {
+                            if (!confirm("確定要刪除這筆記錄嗎？")) return;
+                            setActionLoading(booking.id + "DELETE");
+                            const res = await fetch(`/api/bookings/${booking.id}`, { method: "DELETE" });
+                            if (res.ok) {
+                              setBookings((prev) => prev.filter((b) => b.id !== booking.id));
+                            } else {
+                              alert("刪除失敗，請重試");
+                            }
+                            setActionLoading(null);
+                          }}
+                          disabled={!!actionLoading}
+                          className="px-3 py-1.5 bg-red-100 text-red-600 text-sm rounded-lg hover:bg-red-200 font-medium"
+                        >
+                          刪除記錄
+                        </button>
+                      )}
                       {/* 老師看到待確認時顯示接受/拒絕 */}
                       {isTeacher && booking.status === "PENDING" && (
                         <>

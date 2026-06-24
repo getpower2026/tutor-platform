@@ -141,3 +141,22 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   return NextResponse.json(updated);
 }
+
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
+  const booking = await prisma.booking.findUnique({ where: { id } });
+  if (!booking) return NextResponse.json({ message: "找不到預約" }, { status: 404 });
+
+  // 只有學生本人可刪，且只能刪已完成或已取消
+  if (booking.studentId !== session.user.id)
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  if (!["COMPLETED", "CANCELLED"].includes(booking.status))
+    return NextResponse.json({ message: "只能刪除已完成或已取消的預約" }, { status: 400 });
+
+  await prisma.review.deleteMany({ where: { bookingId: id } });
+  await prisma.booking.delete({ where: { id } });
+  return NextResponse.json({ message: "ok" });
+}
