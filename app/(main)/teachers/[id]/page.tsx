@@ -81,7 +81,6 @@ export default function TeacherDetailPage() {
               <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                 <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> 教學 {teacher.experience} 年</span>
                 <span className="flex items-center gap-1"><GraduationCap className="w-4 h-4" /> {teacher.education}</span>
-                <span className="flex items-center gap-1"><Languages className="w-4 h-4" /> {teacher.languages?.join("、")}</span>
               </div>
             </div>
             <div className="text-right">
