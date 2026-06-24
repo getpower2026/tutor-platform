@@ -26,8 +26,6 @@ export default function AdminPage() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [changingRole, setChangingRole] = useState<string | null>(null);
 
-  const [changingRole, setChangingRole] = useState<string | null>(null);
-
   const handleChangeRole = async (userId: string, name: string, newRole: "TEACHER" | "STUDENT") => {
     const label = newRole === "TEACHER" ? "老師" : "學生";
     if (!confirm(`確定要將「${name}」的身份改為${label}？`)) return;
