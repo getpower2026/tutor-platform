@@ -22,6 +22,7 @@ export default function AdminPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"teachers" | "students" | "bookings">("teachers");
+  const [bookingFilter, setBookingFilter] = useState<"ALL" | "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED">("ALL");
   const [deleting, setDeleting] = useState<string | null>(null);
 
   const handleDelete = async (userId: string, name: string) => {
@@ -202,51 +203,83 @@ export default function AdminPage() {
 
         {/* Bookings */}
         {tab === "bookings" && (
-          <div className="card overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  {["學生", "老師", "上課時間", "金額", "狀態", "預約日", ""].map((h) => (
-                    <th key={h} className="text-left px-4 py-3 text-gray-500 font-medium">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {data.bookings.map((b: any) => (
-                  <tr key={b.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium">{b.student?.name}</td>
-                    <td className="px-4 py-3 text-gray-600">{b.teacher?.name}</td>
-                    <td className="px-4 py-3 text-gray-500">{new Date(b.startTime).toLocaleString("zh-TW", { timeZone: "Asia/Taipei", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</td>
-                    <td className="px-4 py-3">NT${b.totalAmount}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                        b.status === "CONFIRMED" ? "bg-blue-50 text-blue-600" :
-                        b.status === "COMPLETED" ? "bg-green-50 text-green-600" :
-                        b.status === "CANCELLED" ? "bg-gray-100 text-gray-500" :
-                        "bg-amber-50 text-amber-600"
-                      }`}>
-                        {STATUS_LABEL[b.status] || b.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-400">{formatDate(b.createdAt)}</td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={async () => {
-                          if (!confirm(`確定要刪除此預約？`)) return;
-                          const res = await fetch(`/api/admin/bookings/${b.id}`, { method: "DELETE" });
-                          if (res.ok) setData((prev: any) => ({ ...prev, bookings: prev.bookings.filter((x: any) => x.id !== b.id) }));
-                          else alert("刪除失敗");
-                        }}
-                        className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
-                      >
-                        <Trash2 className="w-3 h-3" />刪除
-                      </button>
-                    </td>
+          <div>
+            {/* 篩選列 */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {([
+                { key: "ALL",       label: "全部",     color: "bg-gray-700 text-white" },
+                { key: "PENDING",   label: "⏳ 等老師確認", color: "bg-amber-500 text-white" },
+                { key: "CONFIRMED", label: "✅ 老師已接受", color: "bg-blue-500 text-white" },
+                { key: "COMPLETED", label: "🎓 已完成",  color: "bg-green-500 text-white" },
+                { key: "CANCELLED", label: "❌ 拒絕／取消", color: "bg-gray-400 text-white" },
+              ] as const).map(({ key, label, color }) => {
+                const count = key === "ALL" ? data.bookings.length : data.bookings.filter((b: any) => b.status === key).length;
+                return (
+                  <button key={key} onClick={() => setBookingFilter(key)}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-opacity ${bookingFilter === key ? color : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
+                    {label} ({count})
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="card overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    {["家長／學生", "邀請老師", "上課時間", "預約日", "狀態", "備註", ""].map((h) => (
+                      <th key={h} className="text-left px-4 py-3 text-gray-500 font-medium whitespace-nowrap">{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            {data.bookings.length === 0 && <p className="text-center py-12 text-gray-400">尚無預約資料</p>}
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {data.bookings
+                    .filter((b: any) => bookingFilter === "ALL" || b.status === bookingFilter)
+                    .map((b: any) => (
+                    <tr key={b.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        <div className="font-medium">{b.student?.name}</div>
+                        <div className="text-xs text-gray-400">{b.student?.email}</div>
+                      </td>
+                      <td className="px-4 py-3 font-medium text-indigo-700">{b.teacher?.name}</td>
+                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
+                        {new Date(b.startTime).toLocaleString("zh-TW", { timeZone: "Asia/Taipei", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                      </td>
+                      <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{formatDate(b.createdAt)}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                          b.status === "CONFIRMED"  ? "bg-blue-100 text-blue-700" :
+                          b.status === "COMPLETED"  ? "bg-green-100 text-green-700" :
+                          b.status === "CANCELLED"  ? "bg-gray-100 text-gray-500" :
+                          "bg-amber-100 text-amber-700"
+                        }`}>
+                          {b.status === "PENDING" ? "⏳ 等老師確認" :
+                           b.status === "CONFIRMED" ? "✅ 老師已接受" :
+                           b.status === "COMPLETED" ? "🎓 已完成" : "❌ 拒絕／取消"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-400 text-xs max-w-32 truncate">{b.note || "—"}</td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={async () => {
+                            if (!confirm(`確定要刪除此預約？`)) return;
+                            const res = await fetch(`/api/admin/bookings/${b.id}`, { method: "DELETE" });
+                            if (res.ok) setData((prev: any) => ({ ...prev, bookings: prev.bookings.filter((x: any) => x.id !== b.id) }));
+                            else alert("刪除失敗");
+                          }}
+                          className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                        >
+                          <Trash2 className="w-3 h-3" />刪除
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {data.bookings.filter((b: any) => bookingFilter === "ALL" || b.status === bookingFilter).length === 0 && (
+                <p className="text-center py-12 text-gray-400">此分類尚無資料</p>
+              )}
+            </div>
           </div>
         )}
       </div>
