@@ -164,27 +164,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Founder */}
-      <section className="py-20 px-4 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-4">創辦人介紹｜汪主任</h2>
-          <p className="text-red-600 text-center mb-6">14年補教經驗，用心媒合每一位學生與老師</p>
-
-
-          <div className="grid md:grid-cols-2 gap-12 items-center mb-12">
-            {/* Left: text */}
-            <div className="space-y-4 text-gray-600 leading-relaxed">
-              <p>汪主任畢業於國立臺北教育大學，擁有14年以上補習班經營與師生媒合經驗。多年來協助無數學生找到適合的老師，也幫助老師拓展教學機會。</p>
-              <p>創立 TutorLink 的理念很簡單：讓學生更容易找到好老師，讓老師更容易找到學生。<strong className="text-red-600">平台永久免費使用</strong>，希望透過公開透明的媒合機制，讓更多人享有優質的學習資源。</p>
-            </div>
-            {/* Right: news + store */}
-            <div className="grid grid-cols-1 gap-4">
-              <img src="/founder-news.png" alt="汪主任接受媒體採訪" className="rounded-xl object-cover w-full h-72 shadow-md" />
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* CTA */}
       <section className="py-20 px-4 bg-primary-600 text-white text-center">
         <h2 className="text-3xl font-bold mb-4">準備好開始了嗎？</h2>
