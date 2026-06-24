@@ -221,6 +221,7 @@ const STUDENT_STEPS: Array<{ icon: any; step: string; title: string; color: stri
     items: [
       "老師接受後，您會收到 Email 通知",
       "登入控制台可查看老師的手機號碼",
+      "收到老師的 Email 也可看到老師手機號碼",
       "請主動致電老師，討論收費方式與正式上課時間",
       "⚠️ 本平台不收任何費用，收費方式請與老師直接協議",
     ],
