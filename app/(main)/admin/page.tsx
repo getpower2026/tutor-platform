@@ -139,9 +139,9 @@ export default function AdminPage() {
                       </a>
                     </td>
                     <td className="px-4 py-3 text-gray-500">
-                      {t.phone ? (
-                        <a href={`tel:${t.phone}`} className="flex items-center gap-1 hover:text-primary-600">
-                          <Phone className="w-3 h-3" />{t.phone}
+                      {(t.phone || t.user.phone) ? (
+                        <a href={`tel:${t.phone || t.user.phone}`} className="flex items-center gap-1 hover:text-primary-600">
+                          <Phone className="w-3 h-3" />{t.phone || t.user.phone}
                         </a>
                       ) : <span className="text-gray-300">—</span>}
                     </td>
