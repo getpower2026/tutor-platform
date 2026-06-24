@@ -9,7 +9,7 @@ import { Calendar, Video, Clock, CheckCircle, XCircle, AlertCircle, User, KeyRou
 import { formatDateTime, formatNTD } from "@/lib/utils";
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
-  PENDING:   { label: "待確認", color: "text-amber-600 bg-amber-50",  icon: AlertCircle },
+  PENDING:   { label: "等老師確認中", color: "text-orange-700 bg-orange-100 border border-orange-300 font-bold animate-pulse",  icon: AlertCircle },
   CONFIRMED: { label: "已確認", color: "text-blue-600 bg-blue-50",    icon: CheckCircle },
   COMPLETED: { label: "已完成", color: "text-green-600 bg-green-50",  icon: CheckCircle },
   CANCELLED: { label: "已取消", color: "text-gray-500 bg-gray-50",    icon: XCircle },
