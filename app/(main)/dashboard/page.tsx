@@ -64,7 +64,7 @@ export default function DashboardPage() {
       const interval = setInterval(fetchBookings, 30000);
       if (session.user.role === "TEACHER") {
         fetch(`/api/teachers/${session.user.id}`).then((r) => r.json()).then((d) => {
-          if (!d.phone) setMissingPhone(true);
+          if (!d.phone && !d.user?.phone) setMissingPhone(true);
         });
       }
       return () => clearInterval(interval);

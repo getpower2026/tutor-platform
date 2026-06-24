@@ -10,7 +10,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   const profile = await prisma.teacherProfile.findFirst({
     where: { userId: id },
     include: {
-      user: { select: { id: true, name: true, image: true, createdAt: true } },
+      user: { select: { id: true, name: true, image: true, createdAt: true, phone: true } },
     },
   });
 
