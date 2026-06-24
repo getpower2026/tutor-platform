@@ -238,8 +238,8 @@ export default function DashboardPage() {
                           取消預約
                         </button>
                       )}
-                      {/* 學生可刪除已完成或已取消的記錄 */}
-                      {!isTeacher && ["COMPLETED", "CANCELLED"].includes(booking.status) && (
+                      {/* 學生或老師可刪除已完成或已取消的記錄 */}
+                      {["COMPLETED", "CANCELLED"].includes(booking.status) && (
                         <button
                           onClick={async () => {
                             if (!confirm("確定要刪除這筆記錄嗎？")) return;

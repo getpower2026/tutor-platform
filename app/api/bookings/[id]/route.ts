@@ -150,8 +150,9 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
   const booking = await prisma.booking.findUnique({ where: { id } });
   if (!booking) return NextResponse.json({ message: "找不到預約" }, { status: 404 });
 
-  // 只有學生本人可刪，且只能刪已完成或已取消
-  if (booking.studentId !== session.user.id)
+  // 學生或老師本人可刪，且只能刪已完成或已取消
+  const isParticipant = booking.studentId === session.user.id || booking.teacherId === session.user.id;
+  if (!isParticipant)
     return NextResponse.json({ message: "Forbidden" }, { status: 403 });
   if (!["COMPLETED", "CANCELLED"].includes(booking.status))
     return NextResponse.json({ message: "只能刪除已完成或已取消的預約" }, { status: 400 });
