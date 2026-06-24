@@ -113,7 +113,7 @@ function RegisterForm() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">聯絡手機 <span className="text-red-500">*必填</span></label>
             <input
-              {...register("phone", { required: "❌ 手機號碼為必填" })}
+              {...register("phone", { required: "❌ 手機號碼為必填", minLength: { value: 8, message: "❌ 手機號碼格式不正確" } })}
               type="tel"
               className="input"
               placeholder="0912-345-678"
