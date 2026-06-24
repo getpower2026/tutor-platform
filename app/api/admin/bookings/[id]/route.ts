@@ -16,6 +16,7 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
 
   try {
+    await prisma.review.deleteMany({ where: { bookingId: id } });
     await prisma.booking.delete({ where: { id } });
     return NextResponse.json({ message: "ok" });
   } catch (err: any) {
