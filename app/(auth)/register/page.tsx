@@ -26,11 +26,15 @@ function RegisterForm() {
   });
 
   const role = watch("role");
-  const [agreed, setAgreed] = useState(false);
+  const [agreedDisclaimer, setAgreedDisclaimer] = useState(false);
+  const [agreedPrivacy, setAgreedPrivacy] = useState(false);
+  const [agreedTerms, setAgreedTerms] = useState(false);
   const [showAgreeAlert, setShowAgreeAlert] = useState(false);
 
+  const allAgreed = agreedDisclaimer && agreedPrivacy && agreedTerms;
+
   const onSubmit = async (data: FormData) => {
-    if (!agreed) {
+    if (!allAgreed) {
       setShowAgreeAlert(true);
       return;
     }
@@ -117,31 +121,36 @@ function RegisterForm() {
             {errors.phone && <p className="text-red-500 text-xs mt-1 font-medium">{errors.phone.message}</p>}
           </div>
 
-          {/* 免責聲明同意 */}
-          <div
-            onClick={() => { setAgreed(!agreed); setShowAgreeAlert(false); }}
-            className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-colors select-none ${
-              agreed ? "border-primary-500 bg-primary-50" : showAgreeAlert ? "border-red-500 bg-red-50" : "border-gray-200 hover:border-gray-300"
-            }`}
-          >
-            <div className={`w-5 h-5 rounded border-2 flex-shrink-0 mt-0.5 flex items-center justify-center transition-colors ${
-              agreed ? "bg-primary-600 border-primary-600" : showAgreeAlert ? "border-red-500" : "border-gray-400"
-            }`}>
-              {agreed && <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-            </div>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              我已閱讀並同意{" "}
-              <a
-                href="/disclaimer"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="text-primary-600 font-bold underline hover:text-primary-700"
+          {/* 三項條款同意 */}
+          <div className="space-y-3">
+            {[
+              { key: "disclaimer" as const, href: "/disclaimer", label: "免責聲明", agreed: agreedDisclaimer, set: setAgreedDisclaimer },
+              { key: "privacy"    as const, href: "/privacy",    label: "隱私權政策", agreed: agreedPrivacy,    set: setAgreedPrivacy },
+              { key: "terms"      as const, href: "/terms",      label: "服務條款",   agreed: agreedTerms,      set: setAgreedTerms },
+            ].map(({ href, label, agreed, set }) => (
+              <div
+                key={href}
+                onClick={() => { set(!agreed); setShowAgreeAlert(false); }}
+                className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors select-none ${
+                  agreed ? "border-primary-500 bg-primary-50" : showAgreeAlert && !agreed ? "border-red-500 bg-red-50" : "border-gray-200 hover:border-gray-300"
+                }`}
               >
-                TutorLink 免責聲明
-              </a>
-              ，了解本平台僅提供媒合服務，不負任何課程、金流或人身安全責任。
-            </p>
+                <div className={`w-5 h-5 rounded border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
+                  agreed ? "bg-primary-600 border-primary-600" : showAgreeAlert && !agreed ? "border-red-500" : "border-gray-400"
+                }`}>
+                  {agreed && <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                </div>
+                <p className="text-sm text-gray-700">
+                  我已閱讀並同意{" "}
+                  <a href={href} target="_blank" rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-primary-600 font-bold underline hover:text-primary-700"
+                  >
+                    TutorLink {label}
+                  </a>
+                </p>
+              </div>
+            ))}
           </div>
 
           <button type="submit" disabled={loading} className="btn-primary w-full">
@@ -162,19 +171,15 @@ function RegisterForm() {
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <AlertTriangle className="w-8 h-8 text-red-500" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">請先閱讀並同意免責聲明</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">請勾選所有條款</h3>
             <p className="text-gray-500 text-sm mb-6 leading-relaxed">
-              您必須閱讀並勾選同意{" "}
-              <a href="/disclaimer" target="_blank" rel="noopener noreferrer" className="text-primary-600 underline font-medium">
-                TutorLink 免責聲明
-              </a>
-              {" "}後，才能完成註冊。
+              您必須閱讀並勾選同意「免責聲明」、「隱私權政策」及「服務條款」後，才能完成註冊。
             </p>
             <button
-              onClick={() => { setShowAgreeAlert(false); setAgreed(true); }}
+              onClick={() => { setShowAgreeAlert(false); setAgreedDisclaimer(true); setAgreedPrivacy(true); setAgreedTerms(true); }}
               className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-xl mb-2"
             >
-              ✅ 我同意免責聲明
+              ✅ 我全部同意
             </button>
             <button
               onClick={() => setShowAgreeAlert(false)}
