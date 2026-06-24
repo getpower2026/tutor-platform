@@ -24,6 +24,29 @@ export default function AdminPage() {
   const [tab, setTab] = useState<"teachers" | "students" | "bookings">("teachers");
   const [bookingFilter, setBookingFilter] = useState<"ALL" | "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED">("ALL");
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [changingRole, setChangingRole] = useState<string | null>(null);
+
+  const [changingRole, setChangingRole] = useState<string | null>(null);
+
+  const handleChangeRole = async (userId: string, name: string, newRole: "TEACHER" | "STUDENT") => {
+    const label = newRole === "TEACHER" ? "老師" : "學生";
+    if (!confirm(`確定要將「${name}」的身份改為${label}？`)) return;
+    setChangingRole(userId);
+    const res = await fetch(`/api/admin/users/${userId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: newRole }),
+    });
+    if (res.ok) {
+      // 重新抓資料更新列表
+      const d = await fetch("/api/admin/stats").then((r) => r.json());
+      setData(d);
+    } else {
+      const err = await res.json().catch(() => ({}));
+      alert(`變更失敗：${err.message || res.status}`);
+    }
+    setChangingRole(null);
+  };
 
   const handleDelete = async (userId: string, name: string) => {
     if (!confirm(`確定要刪除「${name}」？此操作不可復原，相關預約也會一併刪除。`)) return;
@@ -138,13 +161,22 @@ export default function AdminPage() {
                       <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatDate(t.user.createdAt)}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => handleDelete(t.user.id, t.user.name)}
-                        disabled={deleting === t.user.id}
-                        className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
-                      >
-                        <Trash2 className="w-3 h-3" />刪除
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleChangeRole(t.user.id, t.user.name, "STUDENT")}
+                          disabled={changingRole === t.user.id}
+                          className="px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded border border-blue-200"
+                        >
+                          改為學生
+                        </button>
+                        <button
+                          onClick={() => handleDelete(t.user.id, t.user.name)}
+                          disabled={deleting === t.user.id}
+                          className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                        >
+                          <Trash2 className="w-3 h-3" />刪除
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -185,13 +217,22 @@ export default function AdminPage() {
                       <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatDate(s.createdAt)}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => handleDelete(s.id, s.name)}
-                        disabled={deleting === s.id}
-                        className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
-                      >
-                        <Trash2 className="w-3 h-3" />刪除
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleChangeRole(s.id, s.name, "TEACHER")}
+                          disabled={changingRole === s.id}
+                          className="px-2 py-1 text-xs text-green-600 hover:bg-green-50 rounded border border-green-200"
+                        >
+                          改為老師
+                        </button>
+                        <button
+                          onClick={() => handleDelete(s.id, s.name)}
+                          disabled={deleting === s.id}
+                          className="flex items-center gap-1 px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                        >
+                          <Trash2 className="w-3 h-3" />刪除
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
