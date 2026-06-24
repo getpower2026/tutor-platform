@@ -216,8 +216,9 @@ export default function HomePage() {
           </a>
           <p className="text-gray-500 text-xs mt-2">有任何網站問題或使用疑問，歡迎透過 LINE 與我們聯繫</p>
         </div>
-        <div className="mb-2">
+        <div className="mb-2 flex gap-4 justify-center">
           <a href="/disclaimer" className="text-gray-500 hover:text-gray-300 underline text-xs">免責聲明</a>
+          <a href="/privacy" className="text-gray-500 hover:text-gray-300 underline text-xs">隱私權政策</a>
         </div>
         © 2026 TutorLink. 保留所有權利。
       </footer>
