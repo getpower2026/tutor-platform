@@ -1,12 +1,11 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import { Navbar } from "@/components/layout/Navbar";
-import { BookingModal } from "@/components/booking/BookingModal";
-import { Star, Clock, GraduationCap, Languages, BookOpen, Calendar, MessageSquare, Phone } from "lucide-react";
+import { Star, Clock, GraduationCap, BookOpen, MessageSquare } from "lucide-react";
 import { formatNTD } from "@/lib/utils";
+import { BookingPanel, BookNowButton } from "./TeacherDetailClient";
+
+export const revalidate = 5;
 
 function StarDisplay({ rating }: { rating: number }) {
   return (
@@ -18,38 +17,22 @@ function StarDisplay({ rating }: { rating: number }) {
   );
 }
 
-export default function TeacherDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const { data: session } = useSession();
-  const router = useRouter();
-  const [teacher, setTeacher] = useState<any>(null);
-  const [reviews, setReviews] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showBooking, setShowBooking] = useState(false);
+export default async function TeacherDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
-  useEffect(() => {
-    setTeacher(null);
-    setLoading(true);
-    Promise.all([
-      fetch(`/api/teachers/${id}`, { cache: "no-store" }).then((r) => r.json()),
-      fetch(`/api/teachers/${id}/reviews`).then((r) => r.json()),
-    ]).then(([teacherData, reviewsData]) => {
-      setTeacher(teacherData);
-      setReviews(Array.isArray(reviewsData) ? reviewsData : []);
-      setLoading(false);
-    });
-  }, [id]);
+  const [teacher, reviews] = await Promise.all([
+    prisma.teacherProfile.findFirst({
+      where: { userId: id },
+      include: { user: { select: { id: true, name: true, image: true, phone: true } } },
+    }),
+    prisma.review.findMany({
+      where: { teacherId: id },
+      include: { reviewer: { select: { name: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
-  if (loading) return (
-    <div className="min-h-screen">
-      <Navbar />
-      <div className="max-w-4xl mx-auto px-4 py-12 animate-pulse">
-        <div className="card p-8"><div className="h-32 bg-gray-100 rounded" /></div>
-      </div>
-    </div>
-  );
-
-  if (!teacher) return <div>找不到老師</div>;
+  if (!teacher) notFound();
 
   return (
     <div className="min-h-screen">
@@ -59,12 +42,7 @@ export default function TeacherDetailPage() {
           <div className="flex flex-col sm:flex-row gap-6">
             <div className="w-36 h-36 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
               {teacher.photoUrl ? (
-                <img src={teacher.photoUrl} alt={teacher.user.name} className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = "none";
-                    (e.target as HTMLImageElement).parentElement!.innerHTML = `<span class="text-5xl font-bold text-primary-600">${teacher.user.name[0]}</span>`;
-                  }}
-                />
+                <img src={teacher.photoUrl} alt={teacher.user.name} className="w-full h-full object-cover" />
               ) : (
                 <span className="text-5xl font-bold text-primary-600">{teacher.user.name[0]}</span>
               )}
@@ -86,13 +64,7 @@ export default function TeacherDetailPage() {
             <div className="text-right">
               <div className="text-3xl font-bold text-primary-600 mb-1">{formatNTD(teacher.hourlyRate)}</div>
               <div className="text-gray-400 text-sm mb-4">每小時</div>
-              <button
-                onClick={() => session ? setShowBooking(true) : router.push("/login")}
-                className="btn-primary px-8 py-3 text-base"
-              >
-                <Calendar className="w-4 h-4 mr-2" />
-                立即預約
-              </button>
+              <BookNowButton teacher={teacher} />
             </div>
           </div>
         </div>
@@ -115,7 +87,6 @@ export default function TeacherDetailPage() {
               </div>
             </div>
 
-            {/* 評價區塊 */}
             <div className="card p-6">
               <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
                 <MessageSquare className="w-5 h-5 text-primary-500" />
@@ -124,7 +95,6 @@ export default function TeacherDetailPage() {
                   <span className="text-sm font-normal text-gray-400">（{reviews.length} 則）</span>
                 )}
               </h2>
-
               {reviews.length === 0 ? (
                 <p className="text-gray-400 text-sm">尚無評價</p>
               ) : (
@@ -157,51 +127,9 @@ export default function TeacherDetailPage() {
             </div>
           </div>
 
-          <div className="card p-6 h-fit">
-            <h2 className="font-bold text-lg mb-4">預約課程</h2>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">參考時薪</span>
-                <span className="font-medium">{formatNTD(teacher.hourlyRate)} / 小時</span>
-              </div>
-              {teacher.rating > 0 && (
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500">評分</span>
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                    <span className="font-medium">{teacher.rating.toFixed(1)}</span>
-                  </div>
-                </div>
-              )}
-              {teacher.showPhone && teacher.phone && (
-                <div className="border-t pt-3">
-                  <p className="text-xs text-gray-400 mb-1">老師手機，可直接聯絡溝通</p>
-                  <a href={`tel:${teacher.phone}`} className="flex items-center justify-center gap-2 w-full py-2.5 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl text-base transition-colors">
-                    <Phone className="w-4 h-4" />
-                    {teacher.phone}
-                  </a>
-                </div>
-              )}
-              <div className="border-t pt-3 text-xs text-gray-400">
-                實際收費由老師與家長自行討論，本平台完全免費。
-              </div>
-            </div>
-            <button
-              onClick={() => session ? setShowBooking(true) : router.push("/login")}
-              className="btn-primary w-full mt-4"
-            >
-              選擇時段
-            </button>
-          </div>
+          <BookingPanel teacher={teacher} />
         </div>
       </div>
-
-      {showBooking && (
-        <BookingModal
-          teacher={teacher}
-          onClose={() => setShowBooking(false)}
-        />
-      )}
     </div>
   );
 }
