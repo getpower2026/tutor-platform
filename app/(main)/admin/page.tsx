@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
-import { Users, BookOpen, Calendar, Phone, Mail, Clock, Trash2 } from "lucide-react";
+import { Users, BookOpen, Calendar, Phone, Mail, Clock, Trash2, Megaphone } from "lucide-react";
 
 const ADMIN_EMAIL = "tantriswang@gmail.com";
 
@@ -25,6 +25,9 @@ export default function AdminPage() {
   const [bookingFilter, setBookingFilter] = useState<"ALL" | "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED">("ALL");
   const [deleting, setDeleting] = useState<string | null>(null);
   const [changingRole, setChangingRole] = useState<string | null>(null);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
+  const [annText, setAnnText] = useState("");
+  const [annSaving, setAnnSaving] = useState(false);
 
   const handleChangeRole = async (userId: string, name: string, newRole: "TEACHER" | "STUDENT") => {
     const label = newRole === "TEACHER" ? "老師" : "學生";
@@ -71,6 +74,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (status === "authenticated" && session?.user.email === ADMIN_EMAIL) {
       fetch("/api/admin/stats").then((r) => r.json()).then((d) => { setData(d); setLoading(false); });
+      fetch("/api/admin/announcements").then((r) => r.json()).then((d) => setAnnouncements(Array.isArray(d) ? d : []));
     }
   }, [status, session]);
 
@@ -85,6 +89,64 @@ export default function AdminPage() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-2">後台管理</h1>
         <p className="text-gray-500 mb-8">僅限管理員查看</p>
+
+        {/* 公告管理 */}
+        <div className="card p-6 mb-8">
+          <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
+            <Megaphone className="w-5 h-5 text-blue-600" />
+            公告管理
+          </h2>
+          <div className="flex gap-2 mb-4">
+            <input
+              value={annText}
+              onChange={(e) => setAnnText(e.target.value)}
+              placeholder="輸入公告內容，例如：新增老師搜尋功能上線！"
+              className="input flex-1"
+            />
+            <button
+              disabled={annSaving || !annText.trim()}
+              onClick={async () => {
+                setAnnSaving(true);
+                const res = await fetch("/api/admin/announcements", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ text: annText }),
+                });
+                if (res.ok) {
+                  const d = await res.json();
+                  setAnnouncements((prev) => [d, ...prev]);
+                  setAnnText("");
+                } else alert("儲存失敗");
+                setAnnSaving(false);
+              }}
+              className="px-4 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {annSaving ? "儲存中..." : "發布公告"}
+            </button>
+          </div>
+          {announcements.length === 0 ? (
+            <p className="text-gray-400 text-sm">尚無公告</p>
+          ) : (
+            <ul className="space-y-2">
+              {announcements.map((a, i) => (
+                <li key={a.id} className={`flex items-start gap-3 p-3 rounded-lg ${i === 0 ? "bg-blue-50 border border-blue-200" : "bg-gray-50"}`}>
+                  {i === 0 && <span className="px-1.5 py-0.5 bg-blue-600 text-white text-xs font-bold rounded flex-shrink-0">顯示中</span>}
+                  <span className="text-sm text-gray-400 flex-shrink-0">{new Date(a.createdAt).toLocaleDateString("zh-TW")}</span>
+                  <span className="text-sm flex-1">{a.text}</span>
+                  <button
+                    onClick={async () => {
+                      await fetch("/api/admin/announcements", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: a.id }) });
+                      setAnnouncements((prev) => prev.filter((x) => x.id !== a.id));
+                    }}
+                    className="text-red-400 hover:text-red-600 flex-shrink-0"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">
