@@ -15,6 +15,42 @@ const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = 
   CANCELLED: { label: "已取消", color: "text-gray-500 bg-gray-50",    icon: XCircle },
 };
 
+function WhiteboardMenu({ bookingId }: { bookingId: string }) {
+  const [open, setOpen] = useState(false);
+  const pages = Array.from({ length: 50 }, (_, i) => i + 1).map((p) => {
+    const cleaned = bookingId.replace(/-/g, "").slice(0, 17);
+    const roomId = (cleaned + String(p).padStart(2, "0") + "0").slice(0, 20);
+    const key = btoa(bookingId + p).replace(/[^a-zA-Z0-9]/g, "").slice(0, 22).padEnd(22, "A");
+    return { p, url: `https://excalidraw.com/#room=${roomId},${key}` };
+  });
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="text-xs border border-purple-200 bg-purple-50 text-purple-700 rounded-lg px-2 py-1.5 cursor-pointer font-medium"
+      >
+        📄 查看白板 ▾
+      </button>
+      {open && (
+        <div className="absolute z-50 mt-1 left-0 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto min-w-[110px]">
+          {pages.map(({ p, url }) => (
+            <a
+              key={p}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 border-b border-gray-100 last:border-0"
+            >
+              第 {p} 頁
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function StarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [hover, setHover] = useState(0);
   return (
@@ -300,19 +336,7 @@ export default function DashboardPage() {
                       )}
                       {/* 查看白板各頁 */}
                       {booking.status === "COMPLETED" && (
-                        <select
-                          defaultValue=""
-                          onChange={(e) => { if (e.target.value) { window.open(e.target.value, "_blank"); e.target.value = ""; } }}
-                          className="text-xs border border-purple-200 bg-purple-50 text-purple-700 rounded-lg px-2 py-1.5 cursor-pointer font-medium"
-                        >
-                          <option value="" disabled>📄 查看白板</option>
-                          {Array.from({ length: 50 }, (_, i) => i + 1).map((p) => {
-                            const cleaned = booking.id.replace(/-/g,"").slice(0,17);
-                            const roomId = (cleaned + String(p).padStart(2,"0") + "0").slice(0,20);
-                            const key = btoa(booking.id + p).replace(/[^a-zA-Z0-9]/g,"").slice(0,22).padEnd(22,"A");
-                            return <option key={p} value={`https://excalidraw.com/#room=${roomId},${key}`}>第 {p} 頁</option>;
-                          })}
-                        </select>
+                        <WhiteboardMenu bookingId={booking.id} />
                       )}
                       {/* 學生評價按鈕 */}
                       {canReview && (
