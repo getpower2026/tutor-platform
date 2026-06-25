@@ -171,7 +171,7 @@ export default function TeacherProfilePage() {
                 {...register("bio", { required: "請填寫個人簡介" })}
                 className="input resize-none"
                 rows={4}
-                placeholder="介紹你的教學風格、專長、學歷背景..."
+                placeholder={"介紹你的教學風格、專長、學歷背景...\n\n（可按 Enter 分段，家長閱讀更清楚）"}
               />
               {errors.bio && <p className="text-red-500 text-xs mt-1">{errors.bio.message}</p>}
             </div>

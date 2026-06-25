@@ -126,7 +126,7 @@ export default function TeacherDetailPage() {
           <div className="md:col-span-2 space-y-6">
             <div className="card p-6">
               <h2 className="font-bold text-lg mb-3">關於我</h2>
-              <p className="text-gray-600 leading-relaxed">{teacher.bio || "尚未填寫個人簡介"}</p>
+              <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{teacher.bio || "尚未填寫個人簡介"}</p>
             </div>
             <div className="card p-6">
               <h2 className="font-bold text-lg mb-3 flex items-center gap-2"><BookOpen className="w-5 h-5 text-primary-500" />教授科目</h2>
