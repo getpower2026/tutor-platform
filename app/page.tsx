@@ -14,6 +14,23 @@ export default function HomePage() {
     <div className="min-h-screen">
       <Navbar />
 
+      {/* 更新公告 - 最新一則顯示在最上方 */}
+      {(() => {
+        const announcements = [
+          { date: "2026-06-25", text: "🎉 TutorLink 正式上線！歡迎老師與學生加入平台。" },
+        ];
+        const latest = announcements[0];
+        return (
+          <section className="bg-blue-600 text-white py-3 px-4">
+            <div className="max-w-5xl mx-auto flex items-center gap-3 flex-wrap">
+              <span className="px-2.5 py-0.5 bg-white text-blue-600 text-xs font-bold rounded flex-shrink-0">最新公告</span>
+              <span className="text-base font-semibold">{latest.text}</span>
+              <span className="text-blue-200 text-sm flex-shrink-0">{latest.date}</span>
+            </div>
+          </section>
+        );
+      })()}
+
       {/* Hero */}
       <section className="bg-gradient-to-br from-primary-600 to-primary-800 text-white py-24 px-4">
         <div className="max-w-4xl mx-auto text-center">
@@ -35,29 +52,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 更新公告 */}
-      {(() => {
-        const announcements = [
-          { date: "2026-06-25", text: "🎉 TutorLink 正式上線！歡迎老師與學生加入平台。" },
-        ];
-        return (
-          <section className="bg-blue-50 border-b border-blue-100 py-4 px-4">
-            <div className="max-w-4xl mx-auto">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="px-2 py-0.5 bg-blue-600 text-white text-xs font-bold rounded">更新公告</span>
-              </div>
-              <ul className="space-y-1">
-                {announcements.map((a, i) => (
-                  <li key={i} className="flex items-start gap-3 text-sm text-gray-700">
-                    <span className="text-gray-400 flex-shrink-0 font-mono">{a.date}</span>
-                    <span>{a.text}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </section>
-        );
-      })()}
 
       {/* 免責聲明 */}
       <section className="bg-gray-900 text-white py-4 px-4">
