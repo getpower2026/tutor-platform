@@ -14,6 +14,7 @@ interface Props {
     rating: number;
     reviewCount: number;
     photoUrl?: string | null;
+    trialClass?: boolean;
     user: { id: string; name: string; image: string | null };
   };
 }
@@ -70,7 +71,12 @@ export function TeacherCard({ teacher }: Props) {
           <span className="text-xl font-bold text-primary-600">{formatNTD(teacher.hourlyRate)}</span>
           <span className="text-gray-400 text-sm"> / 小時</span>
         </div>
-        <span className="btn-primary text-sm px-4 py-1.5">預約</span>
+        <div className="flex items-center gap-2">
+          {teacher.trialClass && (
+            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full font-bold">🎓 可試上</span>
+          )}
+          <span className="btn-primary text-sm px-4 py-1.5">預約</span>
+        </div>
       </div>
     </Link>
   );

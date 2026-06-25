@@ -63,6 +63,7 @@ model TeacherProfile {
   availability Json    // { monday: [{start: "09:00", end: "12:00"}], ... }
   phone       String?
   showPhone   Boolean  @default(false)
+  trialClass  Boolean  @default(false)
   photoUrl    String?
   stripeAccountId String?
   createdAt   DateTime @default(now())

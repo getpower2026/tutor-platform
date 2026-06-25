@@ -111,6 +111,11 @@ export default function TeacherDetailPage() {
                 <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> 教學 {teacher.experience} 年</span>
                 <span className="flex items-center gap-1"><GraduationCap className="w-4 h-4" /> {teacher.education}</span>
               </div>
+              {teacher.trialClass && (
+                <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-bold">
+                  🎓 開放試上一堂課
+                </div>
+              )}
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold text-primary-600 mb-1">{formatNTD(teacher.hourlyRate)}</div>

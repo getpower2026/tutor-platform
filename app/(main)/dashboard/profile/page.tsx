@@ -32,6 +32,7 @@ export default function TeacherProfilePage() {
   const [availability, setAvailability] = useState<Record<string, boolean>>({});
   const [photoUrl, setPhotoUrl] = useState<string>("");
   const [showPhone, setShowPhone] = useState(false);
+  const [trialClass, setTrialClass] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>();
@@ -49,6 +50,7 @@ export default function TeacherProfilePage() {
           setSelectedSubjects(d.subjects || []);
           setPhotoUrl(d.photoUrl || "");
           setShowPhone(!!d.showPhone);
+          setTrialClass(!!d.trialClass);
           const avail: Record<string, boolean> = {};
           DAYS.forEach((day) => { avail[day] = !!d.availability?.[day]; });
           setAvailability(avail);
@@ -108,7 +110,7 @@ export default function TeacherProfilePage() {
     await fetch(`/api/teachers/${session!.user.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...data, subjects: selectedSubjects, availability: avail, languages: ["中文"], showPhone }),
+      body: JSON.stringify({ ...data, subjects: selectedSubjects, availability: avail, languages: ["中文"], showPhone, trialClass }),
     });
     setSaving(false);
     setSuccess(true);
@@ -217,6 +219,18 @@ export default function TeacherProfilePage() {
                 <div>
                   <p className="text-sm font-medium text-gray-700">在「尋找老師」頁面公開顯示手機號碼</p>
                   <p className="text-xs text-gray-400">{showPhone ? "✅ 家長可直接在老師頁面看到並撥打您的手機" : "關閉 — 手機號碼不對外公開"}</p>
+                </div>
+              </div>
+              <div
+                onClick={() => setTrialClass((v) => !v)}
+                className={`mt-2 flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors select-none ${trialClass ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}
+              >
+                <div className={`w-10 h-6 rounded-full flex items-center transition-colors flex-shrink-0 ${trialClass ? "bg-blue-500" : "bg-gray-300"}`}>
+                  <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform mx-0.5 ${trialClass ? "translate-x-4" : "translate-x-0"}`} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">開放學生試上</p>
+                  <p className="text-xs text-gray-400">{trialClass ? "✅ 開放學生申請試上一堂課" : "關閉 — 不開放試上"}</p>
                 </div>
               </div>
             </div>
