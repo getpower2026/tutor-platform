@@ -17,6 +17,7 @@ export default function HomePage() {
       {/* 更新公告 - 最新一則顯示在最上方 */}
       {(() => {
         const announcements = [
+          { date: "2026-06-25", text: "📞 新功能！老師可選擇公開手機號碼，家長可直接點擊撥打聯絡。" },
           { date: "2026-06-25", text: "🎉 TutorLink 正式上線！歡迎老師與學生加入平台。" },
         ];
         const latest = announcements[0];
