@@ -7,9 +7,23 @@ import { prisma } from "@/lib/prisma";
 export const revalidate = 5;
 
 export const metadata: Metadata = {
-  title: "TutorLink｜免費家教媒合平台，線上一對一教學",
-  description: "TutorLink 是免費的家教媒合平台，提供國小、國中、高中線上一對一教學。輕鬆找到專業家教老師，直接聯繫，完全免費。",
+  title: "TutorLink｜免費線上家教平台，一對一家教媒合，線上家教首選",
+  description: "TutorLink 提供免費線上家教媒合，國小、國中、高中一對一家教。找家教、找線上家教、一對一教學，完全免費，直接聯繫老師預約上課。",
+  keywords: "家教,線上家教,一對一,線上一對一,一對一家教,找家教,家教媒合,國中家教,高中家教,國小家教,數學家教,英文家教,線上補習,免費家教",
   alternates: { canonical: "https://www.tutorlink.cc" },
+  openGraph: {
+    title: "TutorLink｜免費線上家教平台，一對一家教媒合",
+    description: "找線上家教、一對一教學，完全免費。國小國中高中各科家教老師，直接聯繫預約。",
+    url: "https://www.tutorlink.cc",
+    siteName: "TutorLink",
+    locale: "zh_TW",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TutorLink｜免費線上家教，一對一教學",
+    description: "找家教、找線上家教，完全免費。國小國中高中各科，直接聯繫老師。",
+  },
 };
 
 export default async function HomePage() {
@@ -18,8 +32,20 @@ export default async function HomePage() {
     orderBy: { createdAt: "desc" },
   });
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "TutorLink",
+    "url": "https://www.tutorlink.cc",
+    "description": "免費線上家教媒合平台，提供國小、國中、高中一對一線上家教服務",
+    "serviceType": ["線上家教", "一對一教學", "家教媒合"],
+    "areaServed": "TW",
+    "inLanguage": "zh-TW",
+  };
+
   return (
     <div className="min-h-screen">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Navbar />
 
       {/* 更新公告 - 從資料庫讀取最新一則 */}
