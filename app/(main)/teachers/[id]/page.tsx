@@ -7,6 +7,11 @@ import { BookingPanel, BookNowButton } from "./TeacherDetailClient";
 
 export const revalidate = 5;
 
+export async function generateStaticParams() {
+  const teachers = await prisma.teacherProfile.findMany({ select: { userId: true } });
+  return teachers.map((t) => ({ id: t.userId }));
+}
+
 function StarDisplay({ rating }: { rating: number }) {
   return (
     <div className="flex gap-0.5">
