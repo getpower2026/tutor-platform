@@ -38,10 +38,7 @@ export default function RoomPage() {
       });
   }, [id, session]);
 
-  const openPage = (page: number) => {
-    window.open(getExcalidrawUrl(id, page), "_blank");
-    setShowPages(false);
-  };
+  const [showPageMenu, setShowPageMenu] = useState(false);
 
   const handleComplete = async () => {
     setCompleting(true);
@@ -75,19 +72,29 @@ export default function RoomPage() {
         )}
 
         {/* 白板頁碼選擇器 */}
-        <div style={{ display: "flex", alignItems: "center", gap: "4px", padding: "3px 4px 3px 10px", background: "#7c3aed", borderRadius: "6px" }}>
-          <PenLine style={{ width: 14, height: 14, color: "white", flexShrink: 0 }} />
-          <span style={{ color: "white", fontSize: "13px", fontWeight: "bold", whiteSpace: "nowrap" }}>白板</span>
-          <select
-            defaultValue=""
-            onChange={(e) => { if (e.target.value) { openPage(Number(e.target.value)); e.currentTarget.value = ""; } }}
-            style={{ background: "#7c3aed", color: "white", border: "none", fontSize: "13px", fontWeight: "bold", cursor: "pointer", outline: "none", padding: "4px 2px" }}
+        <div style={{ position: "relative" }}>
+          <button
+            onClick={() => setShowPageMenu((v) => !v)}
+            style={{ display: "flex", alignItems: "center", gap: "4px", padding: "5px 10px", background: "#7c3aed", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "bold" }}
           >
-            <option value="" disabled>選頁</option>
-            {Array.from({ length: TOTAL_PAGES }, (_, i) => i + 1).map((p) => (
-              <option key={p} value={p}>第 {p} 頁</option>
-            ))}
-          </select>
+            <PenLine style={{ width: 14, height: 14 }} /> 白板 ▾
+          </button>
+          {showPageMenu && (
+            <div style={{ position: "absolute", top: "110%", left: 0, background: "#1e1e2e", border: "1px solid #444", borderRadius: "8px", zIndex: 999, maxHeight: "260px", overflowY: "auto", minWidth: "110px", boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>
+              {Array.from({ length: TOTAL_PAGES }, (_, i) => i + 1).map((p) => (
+                <a
+                  key={p}
+                  href={getExcalidrawUrl(id, p)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setShowPageMenu(false)}
+                  style={{ display: "block", padding: "8px 16px", color: "white", textDecoration: "none", fontSize: "13px", borderBottom: "1px solid #333" }}
+                >
+                  第 {p} 頁
+                </a>
+              ))}
+            </div>
+          )}
         </div>
 
         <button
