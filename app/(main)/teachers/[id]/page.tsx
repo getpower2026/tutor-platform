@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Navbar } from "@/components/layout/Navbar";
 import { BookingModal } from "@/components/booking/BookingModal";
-import { Star, Clock, GraduationCap, Languages, BookOpen, Calendar, MessageSquare } from "lucide-react";
+import { Star, Clock, GraduationCap, Languages, BookOpen, Calendar, MessageSquare, Phone } from "lucide-react";
 import { formatNTD } from "@/lib/utils";
 
 function StarDisplay({ rating }: { rating: number }) {
@@ -171,6 +171,12 @@ export default function TeacherDetailPage() {
                     <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
                     <span className="font-medium">{teacher.rating.toFixed(1)}</span>
                   </div>
+                </div>
+              )}
+              {teacher.showPhone && teacher.phone && (
+                <div className="flex justify-between items-center border-t pt-3">
+                  <span className="text-gray-500 flex items-center gap-1"><Phone className="w-3 h-3" />手機</span>
+                  <a href={`tel:${teacher.phone}`} className="font-medium text-primary-600 hover:underline">{teacher.phone}</a>
                 </div>
               )}
               <div className="border-t pt-3 text-xs text-gray-400">

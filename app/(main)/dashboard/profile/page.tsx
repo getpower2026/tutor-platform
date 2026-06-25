@@ -31,6 +31,7 @@ export default function TeacherProfilePage() {
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [availability, setAvailability] = useState<Record<string, boolean>>({});
   const [photoUrl, setPhotoUrl] = useState<string>("");
+  const [showPhone, setShowPhone] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>();
@@ -47,6 +48,7 @@ export default function TeacherProfilePage() {
           reset({ bio: d.bio, hourlyRate: d.hourlyRate, experience: d.experience, education: d.education, phone: d.phone || "" });
           setSelectedSubjects(d.subjects || []);
           setPhotoUrl(d.photoUrl || "");
+          setShowPhone(!!d.showPhone);
           const avail: Record<string, boolean> = {};
           DAYS.forEach((day) => { avail[day] = !!d.availability?.[day]; });
           setAvailability(avail);
@@ -106,7 +108,7 @@ export default function TeacherProfilePage() {
     await fetch(`/api/teachers/${session!.user.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...data, subjects: selectedSubjects, availability: avail, languages: ["中文"] }),
+      body: JSON.stringify({ ...data, subjects: selectedSubjects, availability: avail, languages: ["中文"], showPhone }),
     });
     setSaving(false);
     setSuccess(true);
@@ -205,7 +207,18 @@ export default function TeacherProfilePage() {
                 className="input"
                 placeholder="0912-345-678"
               />
-              <p className="text-xs text-gray-400 mt-1">僅顯示給老師您同意的家長</p>
+              <div
+                onClick={() => setShowPhone((v) => !v)}
+                className={`mt-2 flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-colors select-none ${showPhone ? "border-green-500 bg-green-50" : "border-gray-200 hover:border-gray-300"}`}
+              >
+                <div className={`w-10 h-6 rounded-full flex items-center transition-colors flex-shrink-0 ${showPhone ? "bg-green-500" : "bg-gray-300"}`}>
+                  <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform mx-0.5 ${showPhone ? "translate-x-4" : "translate-x-0"}`} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">在「尋找老師」頁面公開顯示手機號碼</p>
+                  <p className="text-xs text-gray-400">{showPhone ? "✅ 家長可直接在老師頁面看到並撥打您的手機" : "關閉 — 手機號碼不對外公開"}</p>
+                </div>
+              </div>
             </div>
           </div>
 

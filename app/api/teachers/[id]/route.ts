@@ -35,6 +35,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (data.languages !== undefined) updateData.languages = data.languages;
   if (data.availability !== undefined) updateData.availability = data.availability;
   if (data.phone !== undefined) updateData.phone = data.phone;
+  if (data.showPhone !== undefined) updateData.showPhone = data.showPhone;
   if (data.photoUrl !== undefined && data.photoUrl !== "" && !data.photoUrl.startsWith("blob:")) updateData.photoUrl = data.photoUrl;
 
   const profile = await prisma.teacherProfile.update({
