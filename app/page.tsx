@@ -169,7 +169,7 @@ export default async function HomePage() {
           <div className="grid md:grid-cols-3 gap-8">
             {[
               { icon: ShieldCheck, title: "免費使用", desc: "平台完全免費，不收取任何手續費，老師與家長直接電話討論收費方式、上課時間" },
-              { icon: Video, title: "高品質視訊", desc: "使用 Daily.co 專業視訊技術，支援螢幕分享、虛擬白板，上課體驗流暢" },
+              { icon: Video, title: "免費使用高品質視訊", desc: "使用 Daily.co 專業視訊技術，支援螢幕分享、虛擬白板，上課體驗流暢" },
               { icon: Star, title: "真實評價系統", desc: "所有評價來自實際上過課的學生，確保資訊透明可信" },
             ].map(({ icon: Icon, title, desc }) => (
               <div key={title} className="card p-6">
