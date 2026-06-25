@@ -112,7 +112,7 @@ export default function TeacherDetailPage() {
                 <span className="flex items-center gap-1"><GraduationCap className="w-4 h-4" /> {teacher.education}</span>
               </div>
               {teacher.trialClass && (
-                <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-sm font-bold">
+                <div className="mt-3 inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-full text-base font-bold shadow-sm">
                   🎓 開放試上一堂課
                 </div>
               )}
