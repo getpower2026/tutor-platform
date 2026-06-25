@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Navbar } from "@/components/layout/Navbar";
@@ -26,36 +26,54 @@ export default function TeacherDetailPage() {
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showBooking, setShowBooking] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const timerRef = useRef<any>(null);
 
   useEffect(() => {
     setTeacher(null);
     setLoading(true);
+    setProgress(0);
+
+    timerRef.current = setInterval(() => {
+      setProgress((p) => {
+        if (p >= 80) { clearInterval(timerRef.current); return 80; }
+        return p + Math.random() * 12;
+      });
+    }, 120);
+
     Promise.all([
       fetch(`/api/teachers/${id}`).then((r) => r.json()),
       fetch(`/api/teachers/${id}/reviews`).then((r) => r.json()),
     ]).then(([teacherData, reviewsData]) => {
-      setTeacher(teacherData);
-      setReviews(Array.isArray(reviewsData) ? reviewsData : []);
-      setLoading(false);
+      clearInterval(timerRef.current);
+      setProgress(100);
+      setTimeout(() => {
+        setTeacher(teacherData);
+        setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+        setLoading(false);
+      }, 200);
     });
+
+    return () => clearInterval(timerRef.current);
   }, [id]);
 
   if (loading) return (
     <div className="min-h-screen">
       <Navbar />
-      <div className="max-w-4xl mx-auto px-4 py-12 animate-pulse space-y-4">
-        <div className="card p-8">
-          <div className="flex gap-6">
-            <div className="w-36 h-36 rounded-full bg-gray-200" />
-            <div className="flex-1 space-y-3 pt-4">
-              <div className="h-8 bg-gray-200 rounded w-1/3" />
-              <div className="h-4 bg-gray-100 rounded w-1/4" />
-              <div className="h-4 bg-gray-100 rounded w-1/2" />
-            </div>
+      <div className="flex flex-col items-center justify-center py-32 gap-6">
+        <p className="text-gray-500 text-lg font-medium">資料讀取中...</p>
+        <div className="w-72">
+          <div className="flex justify-between text-sm text-gray-400 mb-2">
+            <span>載入老師資料</span>
+            <span className="font-bold text-primary-600">{Math.min(Math.round(progress), 100)}%</span>
+          </div>
+          <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary-500 rounded-full transition-all duration-200"
+              style={{ width: `${Math.min(progress, 100)}%` }}
+            />
           </div>
         </div>
-        <div className="card p-6 h-32 bg-gray-50" />
-        <div className="card p-6 h-24 bg-gray-50" />
       </div>
     </div>
   );
