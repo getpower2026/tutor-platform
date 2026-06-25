@@ -174,9 +174,12 @@ export default function TeacherDetailPage() {
                 </div>
               )}
               {teacher.showPhone && teacher.phone && (
-                <div className="flex justify-between items-center border-t pt-3">
-                  <span className="text-gray-500 flex items-center gap-1"><Phone className="w-3 h-3" />手機</span>
-                  <a href={`tel:${teacher.phone}`} className="font-medium text-primary-600 hover:underline">{teacher.phone}</a>
+                <div className="border-t pt-3">
+                  <p className="text-xs text-gray-400 mb-1">老師手機，可直接聯絡溝通</p>
+                  <a href={`tel:${teacher.phone}`} className="flex items-center justify-center gap-2 w-full py-2.5 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl text-base transition-colors">
+                    <Phone className="w-4 h-4" />
+                    {teacher.phone}
+                  </a>
                 </div>
               )}
               <div className="border-t pt-3 text-xs text-gray-400">
