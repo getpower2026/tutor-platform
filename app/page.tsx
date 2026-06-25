@@ -4,7 +4,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Search, Video, CreditCard, Star, BookOpen, Users, ShieldCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 5;
 
 export const metadata: Metadata = {
   title: "TutorLink｜免費家教媒合平台，線上一對一教學",
