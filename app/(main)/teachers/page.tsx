@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const revalidate = 30;
+export const revalidate = 5;
 
 export default async function TeachersPage() {
   const teachers = await prisma.teacherProfile.findMany({
