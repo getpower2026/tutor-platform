@@ -28,6 +28,7 @@ export default function AdminPage() {
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [annText, setAnnText] = useState("");
   const [annSaving, setAnnSaving] = useState(false);
+  const [noteModal, setNoteModal] = useState<{ note: string; student: string; teacher: string } | null>(null);
 
   const handleChangeRole = async (userId: string, name: string, newRole: "TEACHER" | "STUDENT") => {
     const label = newRole === "TEACHER" ? "老師" : "學生";
@@ -359,7 +360,16 @@ export default function AdminPage() {
                            b.status === "COMPLETED" ? "🎓 已完成" : "❌ 拒絕／取消"}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-gray-400 text-xs max-w-32 truncate">{b.note || "—"}</td>
+                      <td className="px-4 py-3">
+                        {b.note ? (
+                          <button
+                            onClick={() => setNoteModal({ note: b.note, student: b.student?.name, teacher: b.teacher?.name })}
+                            className="px-2 py-1 bg-red-50 border border-red-300 rounded text-xs text-red-700 font-medium hover:bg-red-100 max-w-32 truncate block text-left"
+                          >
+                            📝 {b.note}
+                          </button>
+                        ) : <span className="text-gray-300 text-xs">—</span>}
+                      </td>
                       <td className="px-4 py-3">
                         <button
                           onClick={async () => {
@@ -384,6 +394,25 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+
+      {/* 備註 Modal */}
+      {noteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4" onClick={() => setNoteModal(null)}>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold mb-1">家長備註</h3>
+            <p className="text-sm text-gray-400 mb-4">{noteModal.student} → {noteModal.teacher} 老師</p>
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <p className="text-base text-gray-800 whitespace-pre-wrap leading-relaxed">{noteModal.note}</p>
+            </div>
+            <button
+              onClick={() => setNoteModal(null)}
+              className="mt-5 w-full py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 font-medium"
+            >
+              關閉
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
