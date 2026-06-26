@@ -13,6 +13,7 @@ type FormData = {
   password: string;
   role: "STUDENT" | "TEACHER";
   phone: string;
+  bio: string;
 };
 
 function RegisterForm() {
@@ -120,6 +121,29 @@ function RegisterForm() {
             />
             {errors.phone && <p className="text-red-500 text-xs mt-1 font-medium">{errors.phone.message}</p>}
           </div>
+
+          {/* 老師專屬：個人簡介 */}
+          {role === "TEACHER" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                個人簡介 <span className="text-red-500">*必填</span>
+              </label>
+              <div className="bg-amber-50 border border-amber-300 rounded-lg px-3 py-2 mb-2">
+                <p className="text-amber-800 text-xs font-medium">⚠️ 家長會依據簡介選擇老師，請詳細填寫教學經歷、擅長科目及教學風格</p>
+              </div>
+              <textarea
+                {...register("bio", {
+                  validate: (v) => role !== "TEACHER" || (v && v.trim().length >= 20) || "❌ 個人簡介為必填，至少 20 個字",
+                })}
+                className="input resize-none"
+                rows={5}
+                placeholder="例如：我是台大數學系畢業，有 3 年家教經驗，擅長用生活化例子解說數學，讓學生快速理解..."
+              />
+              {errors.bio && (
+                <p className="text-red-500 text-sm mt-1 font-medium bg-red-50 border border-red-300 rounded px-3 py-2">{errors.bio.message}</p>
+              )}
+            </div>
+          )}
 
           {/* 三項條款同意 */}
           <div className="space-y-3">

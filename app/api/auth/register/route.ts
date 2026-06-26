@@ -5,11 +5,14 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
-  const { name, email, password, role, phone } = await req.json();
+  const { name, email, password, role, phone, bio } = await req.json();
 
   const trimmedPhone = (phone || "").trim();
   if (!name || !email || !password || !trimmedPhone) {
     return NextResponse.json({ message: "請填寫所有欄位（姓名、Email、密碼、手機均為必填）" }, { status: 400 });
+  }
+  if (role === "TEACHER" && (!bio || bio.trim().length < 20)) {
+    return NextResponse.json({ message: "老師必須填寫個人簡介（至少 20 個字）" }, { status: 400 });
   }
   if (!/^[0-9\-\+\s]{8,15}$/.test(trimmedPhone)) {
     return NextResponse.json({ message: "手機號碼格式不正確（請輸入 8~15 碼數字）" }, { status: 400 });
@@ -29,7 +32,7 @@ export async function POST(req: Request) {
     await prisma.teacherProfile.create({
       data: {
         userId: user.id,
-        bio: "",
+        bio: bio.trim(),
         subjects: [],
         hourlyRate: 500,
         experience: 0,
