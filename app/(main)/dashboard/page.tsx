@@ -84,6 +84,8 @@ export default function DashboardPage() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [rejectModal, setRejectModal] = useState<{ bookingId: string } | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [cancelModal, setCancelModal] = useState<{ bookingId: string } | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -276,9 +278,7 @@ export default function DashboardPage() {
                       {/* 學生可取消待確認的預約 */}
                       {!isTeacher && booking.status === "PENDING" && (
                         <button
-                          onClick={() => {
-                            if (confirm("確定要取消這筆預約嗎？")) handleAction(booking.id, "CANCELLED");
-                          }}
+                          onClick={() => { setCancelModal({ bookingId: booking.id }); setCancelReason(""); }}
                           disabled={!!actionLoading}
                           className="px-3 py-1.5 bg-red-100 text-red-600 text-sm rounded-lg hover:bg-red-200 font-medium"
                         >
@@ -371,6 +371,45 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* 取消預約 Modal */}
+      {cancelModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+            <h3 className="text-xl font-bold mb-1">取消預約</h3>
+            <p className="text-gray-500 text-sm mb-5">請填寫取消原因，將會通知老師</p>
+            <textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              className="input resize-none w-full"
+              rows={4}
+              placeholder="例如：時間衝突、臨時有事等..."
+            />
+            {cancelReason.trim() === "" && (
+              <p className="text-red-500 text-xs mt-1">取消原因為必填</p>
+            )}
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => setCancelModal(null)}
+                className="flex-1 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50"
+              >
+                返回
+              </button>
+              <button
+                onClick={async () => {
+                  if (!cancelReason.trim()) return;
+                  await handleAction(cancelModal.bookingId, "CANCELLED", cancelReason.trim());
+                  setCancelModal(null);
+                }}
+                disabled={!cancelReason.trim() || !!actionLoading}
+                className="flex-1 py-2 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-bold rounded-lg"
+              >
+                確認取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 拒絕 Modal */}
       {rejectModal && (

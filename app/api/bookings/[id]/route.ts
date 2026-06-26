@@ -129,6 +129,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                 <tr style="background:#fef2f2"><td style="padding:8px;color:#666">原定上課時間</td><td style="padding:8px;font-weight:bold">${dateStr}</td></tr>
                 <tr><td style="padding:8px;color:#666">學生姓名</td><td style="padding:8px">${studentName}</td></tr>
               </table>
+              ${rejectReason ? `<div style="background:#fef2f2;border:2px solid #ef4444;border-radius:8px;padding:16px;margin:16px 0"><p style="margin:0 0 6px;font-weight:bold;color:#dc2626">📋 取消原因：</p><p style="margin:0;color:#111;font-size:15px">${rejectReason}</p></div>` : ""}
               <p>請登入 <a href="https://www.tutorlink.cc/dashboard" style="color:#4f46e5">TutorLink 控制台</a> 查看最新預約狀態。</p>
               <p style="color:#999;font-size:12px;margin-top:24px">© 2026 TutorLink</p>
             </div>
