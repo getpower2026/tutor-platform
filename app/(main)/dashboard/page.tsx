@@ -247,7 +247,10 @@ export default function DashboardPage() {
                         {formatDateTime(booking.startTime)}
                       </div>
                       {booking.note && (
-                        <div className="text-xs text-gray-400 mt-1">備註：{booking.note}</div>
+                        <div className="mt-2 px-3 py-2 bg-red-50 border border-red-300 rounded-lg">
+                          <span className="text-xs font-bold text-red-600">📝 家長備註：</span>
+                          <span className="text-sm text-red-800 font-medium ml-1">{booking.note}</span>
+                        </div>
                       )}
                       {!isTeacher && booking.status === "CONFIRMED" && booking.teacher?.teacherProfile?.phone && (
                         <div className="text-sm text-green-700 bg-green-50 rounded px-2 py-1 mt-1 font-medium">

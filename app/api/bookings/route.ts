@@ -77,8 +77,12 @@ export async function POST(req: Request) {
           <table style="width:100%;border-collapse:collapse;margin:16px 0">
             <tr><td style="padding:8px;color:#666">上課時間</td><td style="padding:8px;font-weight:bold">${dateStr}</td></tr>
             <tr style="background:#f9fafb"><td style="padding:8px;color:#666">參考時薪</td><td style="padding:8px;font-weight:bold">NT$ ${teacher.hourlyRate} / 小時</td></tr>
-            ${note ? `<tr><td style="padding:8px;color:#666">家長備註</td><td style="padding:8px">${note}</td></tr>` : ""}
           </table>
+          ${note ? `
+          <div style="background:#fef2f2;border:2px solid #ef4444;border-radius:8px;padding:16px;margin:16px 0">
+            <p style="margin:0 0 8px;font-size:16px;font-weight:bold;color:#dc2626">📝 家長備註（請務必閱讀）</p>
+            <p style="margin:0;font-size:16px;color:#111;white-space:pre-wrap;line-height:1.6">${note}</p>
+          </div>` : ""}
           <div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:12px 16px;margin:16px 0;border-radius:4px">
             <p style="margin:0;font-weight:bold;color:#92400e">📋 請您登入帳號，至控制台按下「接受」或「拒絕」</p>
             <p style="margin:8px 0 0;color:#92400e;font-size:14px">按下「接受」後，家長才會收到您的電話號碼，雙方可直接聯繫討論收費方式。</p>
