@@ -37,7 +37,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-  const { status } = await req.json();
+  const { status, rejectReason } = await req.json();
 
   const booking = await prisma.booking.findUnique({
     where: { id },
@@ -106,6 +106,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
               <h2 style="color:#ef4444">預約未獲接受</h2>
               <p>親愛的 ${studentName}，您好：</p>
               <p>很抱歉，<strong>${teacherName} 老師</strong>無法接受您在 ${dateStr} 的預約。</p>
+              ${rejectReason ? `<div style="background:#fef2f2;border:2px solid #ef4444;border-radius:8px;padding:16px;margin:16px 0"><p style="margin:0 0 6px;font-weight:bold;color:#dc2626">📋 老師拒絕原因：</p><p style="margin:0;color:#111;font-size:15px">${rejectReason}</p></div>` : ""}
               <p>您可以嘗試預約其他老師，或選擇不同時段。</p>
               <p>請登入 <a href="https://www.tutorlink.cc/teachers" style="color:#4f46e5">TutorLink</a> 尋找其他老師。</p>
               <p style="color:#999;font-size:12px;margin-top:24px">© 2026 TutorLink</p>

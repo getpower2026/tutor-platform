@@ -82,6 +82,8 @@ export default function DashboardPage() {
   const [starRating, setStarRating] = useState(0);
   const [reviewComment, setReviewComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [rejectModal, setRejectModal] = useState<{ bookingId: string } | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");
@@ -107,12 +109,12 @@ export default function DashboardPage() {
     }
   }, [session]);
 
-  const handleAction = async (bookingId: string, newStatus: "CONFIRMED" | "CANCELLED" | "COMPLETED") => {
+  const handleAction = async (bookingId: string, newStatus: "CONFIRMED" | "CANCELLED" | "COMPLETED", rejectReason?: string) => {
     setActionLoading(bookingId + newStatus);
     const res = await fetch(`/api/bookings/${bookingId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
+      body: JSON.stringify({ status: newStatus, rejectReason }),
     });
     if (res.ok) {
       setBookings((prev) => prev.map((b) => b.id === bookingId ? { ...b, status: newStatus } : b));
@@ -308,7 +310,7 @@ export default function DashboardPage() {
                             接受
                           </button>
                           <button
-                            onClick={() => handleAction(booking.id, "CANCELLED")}
+                            onClick={() => { setRejectModal({ bookingId: booking.id }); setRejectReason(""); }}
                             disabled={!!actionLoading}
                             className="px-3 py-1.5 bg-red-100 text-red-600 text-sm rounded-lg hover:bg-red-200 font-medium"
                           >
@@ -363,6 +365,45 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* 拒絕 Modal */}
+      {rejectModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+            <h3 className="text-xl font-bold mb-1">拒絕預約</h3>
+            <p className="text-gray-500 text-sm mb-5">請填寫拒絕原因，將會通知家長</p>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              className="input resize-none w-full"
+              rows={4}
+              placeholder="例如：該時段已有安排、科目不符合等..."
+            />
+            {rejectReason.trim() === "" && (
+              <p className="text-red-500 text-xs mt-1">拒絕原因為必填</p>
+            )}
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => setRejectModal(null)}
+                className="flex-1 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50"
+              >
+                取消
+              </button>
+              <button
+                onClick={async () => {
+                  if (!rejectReason.trim()) return;
+                  await handleAction(rejectModal.bookingId, "CANCELLED", rejectReason.trim());
+                  setRejectModal(null);
+                }}
+                disabled={!rejectReason.trim() || !!actionLoading}
+                className="flex-1 py-2 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-bold rounded-lg"
+              >
+                確認拒絕
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 評價 Modal */}
       {reviewModal && (
