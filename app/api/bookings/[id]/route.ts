@@ -67,7 +67,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const updated = await prisma.booking.update({
     where: { id },
-    data: { status },
+    data: { status, ...(rejectReason ? { rejectReason } : {}) },
   });
 
   const dateStr = new Date(booking.startTime).toLocaleString("zh-TW", {

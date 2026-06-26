@@ -254,6 +254,12 @@ export default function DashboardPage() {
                           <span className="text-sm text-red-800 font-medium ml-1">{booking.note}</span>
                         </div>
                       )}
+                      {!isTeacher && booking.status === "CANCELLED" && booking.rejectReason && (
+                        <div className="mt-2 px-3 py-2 bg-orange-50 border border-orange-400 rounded-lg">
+                          <span className="text-xs font-bold text-orange-700">❌ 老師拒絕原因：</span>
+                          <span className="text-sm text-orange-900 font-medium ml-1">{booking.rejectReason}</span>
+                        </div>
+                      )}
                       {!isTeacher && booking.status === "CONFIRMED" && booking.teacher?.teacherProfile?.phone && (
                         <div className="text-sm text-green-700 bg-green-50 rounded px-2 py-1 mt-1 font-medium">
                           📞 老師電話：{booking.teacher.teacherProfile.phone}

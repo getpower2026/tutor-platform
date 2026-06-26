@@ -86,6 +86,7 @@ model Booking {
   dailyRoomName String?
   dailyRoomUrl  String?
   note        String?
+  rejectReason String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
