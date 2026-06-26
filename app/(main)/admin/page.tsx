@@ -16,6 +16,18 @@ const STATUS_LABEL: Record<string, string> = {
   PENDING: "待確認", CONFIRMED: "已確認", COMPLETED: "已完成", CANCELLED: "已取消",
 };
 
+function getBookingStatusLabel(b: any) {
+  if (b.status === "CANCELLED") {
+    if (b.cancelledBy === "TEACHER") return "❌ 老師拒絕";
+    if (b.cancelledBy === "STUDENT") return "🚫 學生取消";
+    return "❌ 拒絕／取消";
+  }
+  if (b.status === "PENDING") return "⏳ 等老師確認";
+  if (b.status === "CONFIRMED") return "✅ 老師已接受";
+  if (b.status === "COMPLETED") return "🎓 已完成";
+  return b.status;
+}
+
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -313,7 +325,7 @@ export default function AdminPage() {
                 { key: "PENDING",   label: "⏳ 等老師確認", color: "bg-amber-500 text-white" },
                 { key: "CONFIRMED", label: "✅ 老師已接受", color: "bg-blue-500 text-white" },
                 { key: "COMPLETED", label: "🎓 已完成",  color: "bg-green-500 text-white" },
-                { key: "CANCELLED", label: "❌ 拒絕／取消", color: "bg-gray-400 text-white" },
+                { key: "CANCELLED", label: "❌ 老師拒絕／🚫 學生取消", color: "bg-gray-400 text-white" },
               ] as const).map(({ key, label, color }) => {
                 const count = key === "ALL" ? data.bookings.length : data.bookings.filter((b: any) => b.status === key).length;
                 return (
@@ -350,14 +362,14 @@ export default function AdminPage() {
                       <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{formatDate(b.createdAt)}</td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                          b.status === "CONFIRMED"  ? "bg-blue-100 text-blue-700" :
-                          b.status === "COMPLETED"  ? "bg-green-100 text-green-700" :
-                          b.status === "CANCELLED"  ? "bg-gray-100 text-gray-500" :
+                          b.status === "CONFIRMED" ? "bg-blue-100 text-blue-700" :
+                          b.status === "COMPLETED" ? "bg-green-100 text-green-700" :
+                          b.status === "CANCELLED" && b.cancelledBy === "TEACHER" ? "bg-red-100 text-red-600" :
+                          b.status === "CANCELLED" && b.cancelledBy === "STUDENT" ? "bg-orange-100 text-orange-600" :
+                          b.status === "CANCELLED" ? "bg-gray-100 text-gray-500" :
                           "bg-amber-100 text-amber-700"
                         }`}>
-                          {b.status === "PENDING" ? "⏳ 等老師確認" :
-                           b.status === "CONFIRMED" ? "✅ 老師已接受" :
-                           b.status === "COMPLETED" ? "🎓 已完成" : "❌ 拒絕／取消"}
+                          {getBookingStatusLabel(b)}
                         </span>
                       </td>
                       <td className="px-4 py-3">

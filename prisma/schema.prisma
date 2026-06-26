@@ -85,8 +85,9 @@ model Booking {
   stripePaymentIntentId String?
   dailyRoomName String?
   dailyRoomUrl  String?
-  note        String?
+  note         String?
   rejectReason String?
+  cancelledBy  String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 

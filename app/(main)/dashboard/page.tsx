@@ -15,6 +15,14 @@ const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = 
   CANCELLED: { label: "已取消", color: "text-gray-500 bg-gray-50",    icon: XCircle },
 };
 
+function getStatusDisplay(booking: any, isTeacher: boolean) {
+  if (booking.status === "CANCELLED") {
+    if (booking.cancelledBy === "TEACHER") return { label: "❌ 老師拒絕", color: "text-red-600 bg-red-50", icon: XCircle };
+    if (booking.cancelledBy === "STUDENT") return { label: "🚫 學生取消", color: "text-orange-600 bg-orange-50", icon: XCircle };
+  }
+  return STATUS_MAP[booking.status] ?? STATUS_MAP.PENDING;
+}
+
 function WhiteboardMenu({ bookingId }: { bookingId: string }) {
   const [open, setOpen] = useState(false);
   const pages = Array.from({ length: 50 }, (_, i) => i + 1).map((p) => {
@@ -229,7 +237,7 @@ export default function DashboardPage() {
           ) : (
             <div className="divide-y divide-gray-50">
               {bookings.map((booking) => {
-                const st = STATUS_MAP[booking.status] ?? STATUS_MAP.PENDING;
+                const st = getStatusDisplay(booking, isTeacher);
                 const Icon = st.icon;
                 const canJoin = booking.status === "CONFIRMED";
                 const otherPerson = isTeacher ? booking.student : booking.teacher;

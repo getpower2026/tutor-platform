@@ -67,7 +67,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const updated = await prisma.booking.update({
     where: { id },
-    data: { status, ...(rejectReason ? { rejectReason } : {}) },
+    data: {
+      status,
+      ...(rejectReason ? { rejectReason } : {}),
+      ...(status === "CANCELLED" ? { cancelledBy: isTeacher ? "TEACHER" : "STUDENT" } : {}),
+    },
   });
 
   const dateStr = new Date(booking.startTime).toLocaleString("zh-TW", {
