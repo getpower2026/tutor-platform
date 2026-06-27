@@ -347,7 +347,7 @@ export default function DashboardPage() {
                           disabled={!!actionLoading}
                           className="px-3 py-1.5 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 font-medium"
                         >
-                          標記完成
+                          課堂結束
                         </button>
                       )}
                       {canJoin && (
