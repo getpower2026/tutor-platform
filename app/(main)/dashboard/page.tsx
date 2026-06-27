@@ -275,6 +275,11 @@ export default function DashboardPage() {
                           📞 老師電話：{booking.teacher.teacherProfile.phone}
                         </div>
                       )}
+                      {isTeacher && booking.status === "CONFIRMED" && booking.student?.phone && (
+                        <div className="text-sm text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1 mt-1 font-medium">
+                          📞 學生電話：{booking.student.phone}
+                        </div>
+                      )}
                       {!isTeacher && booking.status === "COMPLETED" && booking.review && (
                         <div className="text-xs text-gray-400 mt-1 flex items-center gap-1">
                           <Star className="w-3 h-3 fill-amber-400 text-amber-400" />

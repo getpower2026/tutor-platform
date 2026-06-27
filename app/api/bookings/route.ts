@@ -17,7 +17,7 @@ export async function GET() {
       ? { teacherId: session.user.id }
       : { studentId: session.user.id },
     include: {
-      student: { select: { name: true, image: true } },
+      student: { select: { name: true, image: true, phone: true } },
       teacher: {
         select: {
           name: true, image: true,
