@@ -62,6 +62,10 @@ export default async function HomePage() {
       {/* Hero */}
       <section className="bg-gradient-to-br from-primary-600 to-primary-800 text-white py-24 px-4">
         <div className="max-w-4xl mx-auto text-center">
+          <div className="flex items-center justify-center gap-2 text-primary-200 text-sm mb-4">
+            <Users className="w-4 h-4" />
+            已有 <span className="font-bold text-white text-base">3,951</span> 人造訪本平台
+          </div>
           <h1 className="text-xl sm:text-5xl font-bold mb-6 leading-tight">
             <span className="bg-yellow-300 text-yellow-900 px-2 rounded">免費</span>在家就能學習<br />找到最適合你的老師
           </h1>
@@ -76,10 +80,6 @@ export default async function HomePage() {
             <Link href="/register?role=teacher" className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary-500 text-white font-semibold rounded-xl border-2 border-primary-300 hover:bg-primary-400 transition-colors text-lg">
               成為老師
             </Link>
-          </div>
-          <div className="mt-8 flex items-center justify-center gap-2 text-primary-200 text-sm">
-            <Users className="w-4 h-4" />
-            已有 <span className="font-bold text-white text-base">3,951</span> 人造訪本平台
           </div>
         </div>
       </section>
