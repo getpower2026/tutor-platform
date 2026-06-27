@@ -85,7 +85,7 @@ export default async function HomePage() {
             <div className="w-full max-w-2xl rounded-xl overflow-hidden shadow-2xl">
               <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
                 <iframe
-                  src="https://www.youtube.com/embed/ZrPRKG4RdIc"
+                  src="https://www.youtube.com/embed/o6XhPttEfLg"
                   title="TutorLink 介紹影片"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
