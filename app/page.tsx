@@ -62,6 +62,19 @@ export default async function HomePage() {
       {/* Hero */}
       <section className="bg-gradient-to-br from-primary-600 to-primary-800 text-white py-24 px-4">
         <div className="max-w-4xl mx-auto text-center">
+          <div className="mb-6 flex justify-center">
+            <div className="w-full max-w-2xl rounded-xl overflow-hidden shadow-2xl">
+              <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+                <iframe
+                  src="https://www.youtube.com/embed/ZrPRKG4RdIc"
+                  title="TutorLink 介紹影片"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="absolute top-0 left-0 w-full h-full"
+                />
+              </div>
+            </div>
+          </div>
           <div className="flex items-center justify-center gap-2 text-primary-200 text-sm mb-4">
             <Users className="w-4 h-4" />
             已有 <span className="font-bold text-white text-base">3,951</span> 人造訪本平台
