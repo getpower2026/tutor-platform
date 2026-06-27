@@ -41,9 +41,11 @@ const TEACHER_STEPS: Array<{ icon: any; step: string; title: string; color: stri
     color: "bg-blue-50 text-blue-600",
     items: [
       "前往首頁，點擊「成為老師」免費註冊",
-      "填寫姓名、常用 Email（學生預約時通知用）、手機號碼",
+      "填寫姓名、Email、密碼、手機號碼",
+      "上傳老師照片、填寫個人簡介（至少20字）、時薪、教學年資、學歷",
+      "選擇教授科目、可授課天數",
+      "設定是否公開手機號碼、是否開放學生試上",
       "選擇角色：我是老師",
-      "設定至少 8 個字元的密碼",
     ],
   },
   {
