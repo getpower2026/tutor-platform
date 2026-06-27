@@ -77,6 +77,10 @@ export default async function HomePage() {
               成為老師
             </Link>
           </div>
+          <div className="mt-8 flex items-center justify-center gap-2 text-primary-200 text-sm">
+            <Users className="w-4 h-4" />
+            已有 <span className="font-bold text-white text-base">3,951</span> 人造訪本平台
+          </div>
         </div>
       </section>
 
