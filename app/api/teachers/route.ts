@@ -8,6 +8,7 @@ export async function GET(req: Request) {
   const subject = searchParams.get("subject");
   const maxRate = searchParams.get("maxRate");
   const q = searchParams.get("q");
+  const sortBy = searchParams.get("sortBy");
 
   const teachers = await prisma.teacherProfile.findMany({
     where: {
@@ -18,7 +19,7 @@ export async function GET(req: Request) {
     include: {
       user: { select: { id: true, name: true, image: true } },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: sortBy === "rating" ? [{ rating: "desc" }, { reviewCount: "desc" }] : { createdAt: "desc" },
   });
 
   return NextResponse.json(teachers);

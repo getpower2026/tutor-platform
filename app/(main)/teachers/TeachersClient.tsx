@@ -13,23 +13,26 @@ export function TeachersClient({ initialTeachers }: { initialTeachers: any[] }) 
   const [q, setQ] = useState("");
   const [subject, setSubject] = useState("");
   const [maxRate, setMaxRate] = useState("");
+  const [sortBy, setSortBy] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const search = async (newQ: string, newSubject: string, newMaxRate: string) => {
+  const search = async (newQ: string, newSubject: string, newMaxRate: string, newSortBy: string) => {
     setLoading(true);
     const params = new URLSearchParams();
     if (newQ) params.set("q", newQ);
     if (newSubject) params.set("subject", newSubject);
     if (newMaxRate) params.set("maxRate", newMaxRate);
+    if (newSortBy) params.set("sortBy", newSortBy);
     const res = await fetch(`/api/teachers?${params}`);
     const data = await res.json();
     setTeachers(data);
     setLoading(false);
   };
 
-  const handleQ = (v: string) => { setQ(v); search(v, subject, maxRate); };
-  const handleSubject = (v: string) => { setSubject(v); search(q, v, maxRate); };
-  const handleMaxRate = (v: string) => { setMaxRate(v); search(q, subject, v); };
+  const handleQ = (v: string) => { setQ(v); search(v, subject, maxRate, sortBy); };
+  const handleSubject = (v: string) => { setSubject(v); search(q, v, maxRate, sortBy); };
+  const handleMaxRate = (v: string) => { setMaxRate(v); search(q, subject, v, sortBy); };
+  const handleSortBy = (v: string) => { setSortBy(v); search(q, subject, maxRate, v); };
 
   return (
     <div className="min-h-screen">
@@ -53,6 +56,10 @@ export function TeachersClient({ initialTeachers }: { initialTeachers: any[] }) 
             <option value="800">NT$800 以下</option>
             <option value="1200">NT$1,200 以下</option>
             <option value="2000">NT$2,000 以下</option>
+          </select>
+          <select value={sortBy} onChange={(e) => handleSortBy(e.target.value)} className="input w-full sm:w-40">
+            <option value="">最新加入</option>
+            <option value="rating">評價最高</option>
           </select>
         </div>
 
