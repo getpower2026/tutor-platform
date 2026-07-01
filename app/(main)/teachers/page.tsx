@@ -17,6 +17,7 @@ export const revalidate = 5;
 
 export default async function TeachersPage() {
   const teachers = await prisma.teacherProfile.findMany({
+    where: { photoUrl: { not: null } },
     include: {
       user: { select: { id: true, name: true, image: true } },
     },

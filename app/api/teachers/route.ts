@@ -12,6 +12,7 @@ export async function GET(req: Request) {
 
   const teachers = await prisma.teacherProfile.findMany({
     where: {
+      photoUrl: { not: null },
       ...(subject ? { subjects: { has: subject } } : {}),
       ...(maxRate ? { hourlyRate: { lte: parseInt(maxRate) } } : {}),
       ...(q ? { user: { name: { contains: q, mode: "insensitive" } } } : {}),
