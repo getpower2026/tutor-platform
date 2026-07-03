@@ -39,7 +39,7 @@ export function TeachersClient({ initialTeachers }: { initialTeachers: any[] }) 
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-2">尋找家教老師</h1>
-        <p className="text-gray-500 mb-8">找到最適合你的專業家教老師，免費線上一對一教學</p>
+        <p className="text-gray-500 mb-8">找到最適合你的專業家教老師，線上一對一教學</p>
 
         <div className="card p-4 mb-8 flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
