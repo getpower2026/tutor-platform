@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Allow: /teachers
+Allow: /guide
+Allow: /register
+Allow: /login
+
+# 不允許爬蟲抓取需要登入的頁面
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /api/
+
+# 不允許爬蟲抓取圖片儲存空間
+Disallow: /api/upload
+
+Sitemap: https://www.tutorlink.cc/sitemap.xml
