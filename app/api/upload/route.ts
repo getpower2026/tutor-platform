@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
-import { put } from "@vercel/blob";
+import { createClient } from "@supabase/supabase-js";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 export const dynamic = 'force-dynamic';
+
+const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+const MAX_SIZE = 2 * 1024 * 1024; // 2MB
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -13,15 +20,33 @@ export async function POST(req: Request) {
   const file = formData.get("file") as File;
   if (!file) return NextResponse.json({ message: "No file" }, { status: 400 });
 
+  if (file.size > MAX_SIZE) {
+    return NextResponse.json({ message: "圖片大小不能超過 2MB，請壓縮後再上傳" }, { status: 400 });
+  }
+
+  const allowed = ["image/jpeg", "image/png", "image/webp"];
+  if (!allowed.includes(file.type)) {
+    return NextResponse.json({ message: "只支援 JPG、PNG、WebP 格式" }, { status: 400 });
+  }
+
   try {
-    const ext = file.name.split(".").pop() || "jpg";
-    const timestamp = Date.now();
-    const blob = await put(`teachers/${session.user.id}_${timestamp}.${ext}`, file, {
-      access: "public",
-    });
-    return NextResponse.json({ url: blob.url });
+    const ext = file.type === "image/webp" ? "webp" : file.type === "image/png" ? "png" : "jpg";
+    const filename = `${session.user.id}_${Date.now()}.${ext}`;
+    const buffer = await file.arrayBuffer();
+
+    const { error } = await supabase.storage
+      .from("teacher-photos")
+      .upload(filename, buffer, {
+        contentType: file.type,
+        upsert: true,
+      });
+
+    if (error) throw error;
+
+    const { data } = supabase.storage.from("teacher-photos").getPublicUrl(filename);
+    return NextResponse.json({ url: data.publicUrl });
   } catch (err: any) {
-    console.error("Blob upload error:", err);
+    console.error("Upload error:", err);
     return NextResponse.json({ message: err?.message || String(err) }, { status: 500 });
   }
 }
