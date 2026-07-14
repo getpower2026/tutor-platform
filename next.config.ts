@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     domains: ["lh3.googleusercontent.com", "avatars.githubusercontent.com"],
     remotePatterns: [
       { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
+      { protocol: "https", hostname: "hmlxljmhaoscocrlsriq.supabase.co" },
     ],
   },
 };

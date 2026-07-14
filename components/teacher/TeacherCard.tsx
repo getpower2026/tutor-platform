@@ -25,17 +25,15 @@ export function TeacherCard({ teacher }: Props) {
       <div className="flex items-start gap-4 mb-4">
         <div className="w-24 h-24 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
           {teacher.photoUrl ? (
-            <img
+            <Image
               src={teacher.photoUrl}
               alt={teacher.user.name}
+              width={96}
+              height={96}
               className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
-                (e.target as HTMLImageElement).parentElement!.innerHTML = `<span class="text-3xl font-bold text-primary-600">${teacher.user.name[0]}</span>`;
-              }}
             />
           ) : (
-            <span className="text-sm font-bold text-primary-400">未上傳</span>
+            <span className="text-3xl font-bold text-primary-600">{teacher.user.name[0]}</span>
           )}
         </div>
         <div className="flex-1 min-w-0">
