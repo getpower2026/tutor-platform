@@ -5,11 +5,6 @@ import { authOptions } from "@/lib/auth";
 
 export const dynamic = 'force-dynamic';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 const MAX_SIZE = 2 * 1024 * 1024; // 2MB
 
 export async function POST(req: Request) {
@@ -30,6 +25,12 @@ export async function POST(req: Request) {
   }
 
   try {
+    const supabase = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { persistSession: false } }
+    );
+
     const ext = file.type === "image/webp" ? "webp" : file.type === "image/png" ? "png" : "jpg";
     const filename = `${session.user.id}_${Date.now()}.${ext}`;
     const buffer = await file.arrayBuffer();
