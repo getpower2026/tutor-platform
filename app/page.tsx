@@ -62,8 +62,8 @@ export default async function HomePage() {
       {/* Hero */}
       <section className="bg-gradient-to-br from-primary-600 to-primary-800 text-white py-24 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="text-white text-2xl font-bold mb-3">
-            免費使用平台
+          <div className="text-white text-4xl font-bold mb-3">
+            永久免費使用平台
           </div>
           <div className="flex items-center justify-center gap-2 text-primary-200 text-sm mb-4">
             <Users className="w-4 h-4" />
