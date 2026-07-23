@@ -70,7 +70,7 @@ export default async function HomePage() {
             已有 <span className="font-bold text-white text-base">3,951</span> 人造訪本平台
           </div>
           <h1 className="text-xl sm:text-5xl font-bold mb-6 leading-tight">
-            <span className="bg-yellow-300 text-yellow-900 px-2 rounded">免費</span>在家就能學習<br />找到最適合你的老師
+            在家就能學習<br />找到最適合你的老師
           </h1>
           <p className="text-base sm:text-xl text-primary-100 mb-10 max-w-2xl mx-auto">
             TutorLink 連結專業老師與求知學生，透過安全的視訊系統，隨時隨地一對一上課。
