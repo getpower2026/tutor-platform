@@ -110,27 +110,29 @@ function RegisterForm() {
       return;
     }
 
-    // 3. 上傳照片（老師）
+    // 3. 上傳照片（老師），失敗時重試最多 3 次以應付行動網路不穩定
     if (data.role === "TEACHER" && photoFile) {
       let photoOk = false;
-      try {
-        const formData = new FormData();
-        formData.append("file", photoFile);
-        const upRes = await fetch("/api/upload", { method: "POST", body: formData });
-        if (upRes.ok) {
-          const { url } = await upRes.json();
-          const patchRes = await fetch(`/api/teachers/${userId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ photoUrl: url }),
-          });
-          photoOk = patchRes.ok;
+      for (let attempt = 0; attempt < 3 && !photoOk; attempt++) {
+        try {
+          const formData = new FormData();
+          formData.append("file", photoFile);
+          const upRes = await fetch("/api/upload", { method: "POST", body: formData });
+          if (upRes.ok) {
+            const { url } = await upRes.json();
+            const patchRes = await fetch(`/api/teachers/${userId}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ photoUrl: url }),
+            });
+            photoOk = patchRes.ok;
+          }
+        } catch {
+          photoOk = false;
         }
-      } catch {
-        photoOk = false;
       }
       if (!photoOk) {
-        alert("帳號已建立成功，但照片上傳失敗。請登入後至「編輯個人檔案」重新上傳照片，家長才看得到您的頭像。");
+        alert("帳號已建立成功，但照片上傳失敗（可能是網路不穩定）。請登入後至「編輯個人檔案」重新上傳照片，家長才看得到您的頭像。");
       }
     }
 

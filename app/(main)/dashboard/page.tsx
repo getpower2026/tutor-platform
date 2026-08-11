@@ -86,6 +86,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [missingPhone, setMissingPhone] = useState(false);
+  const [missingPhoto, setMissingPhoto] = useState(false);
   const [reviewModal, setReviewModal] = useState<{ bookingId: string; teacherName: string } | null>(null);
   const [starRating, setStarRating] = useState(0);
   const [reviewComment, setReviewComment] = useState("");
@@ -113,6 +114,7 @@ export default function DashboardPage() {
       if (session.user.role === "TEACHER") {
         fetch(`/api/teachers/${session.user.id}`).then((r) => r.json()).then((d) => {
           if (!d.phone && !d.user?.phone) setMissingPhone(true);
+          if (!d.photoUrl) setMissingPhoto(true);
         });
       }
       return () => clearInterval(interval);
@@ -167,6 +169,12 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
+      {isTeacher && missingPhoto && (
+        <div className="bg-red-600 text-white py-3 px-4 text-center font-medium">
+          ⚠️ 您尚未上傳照片！家長在「尋找老師」頁面將看不到您的頭像。
+          <Link href="/dashboard/profile" className="ml-3 underline font-bold">立即前往上傳 →</Link>
+        </div>
+      )}
       {isTeacher && missingPhone && (
         <div className="bg-red-600 text-white py-3 px-4 text-center font-medium">
           ⚠️ 您尚未填寫手機號碼！家長確認預約後將看不到您的聯絡方式。
