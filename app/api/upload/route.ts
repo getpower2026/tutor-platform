@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { randomUUID } from "crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -8,8 +9,9 @@ export const dynamic = 'force-dynamic';
 const MAX_SIZE = 2 * 1024 * 1024; // 2MB
 
 export async function POST(req: Request) {
+  // 註冊流程中老師尚未登入就需要上傳照片，因此允許匿名上傳；
+  // 已登入時仍優先用 session.user.id 命名，行為與原本一致。
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
   const formData = await req.formData();
   const file = formData.get("file") as File;
@@ -32,7 +34,8 @@ export async function POST(req: Request) {
     );
 
     const ext = file.type === "image/webp" ? "webp" : file.type === "image/png" ? "png" : "jpg";
-    const filename = `${session.user.id}_${Date.now()}.${ext}`;
+    const idPart = session?.user?.id ?? `anon_${randomUUID()}`;
+    const filename = `${idPart}_${Date.now()}.${ext}`;
     const buffer = await file.arrayBuffer();
 
     const { error } = await supabase.storage

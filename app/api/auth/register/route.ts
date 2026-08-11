@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
-  const { name, email, password, role, phone, bio, hourlyRate, experience, education, subjects, availability, showPhone, trialClass } = await req.json();
+  const { name, email, password, role, phone, bio, hourlyRate, experience, education, subjects, availability, showPhone, trialClass, photoUrl } = await req.json();
 
   const trimmedPhone = (phone || "").trim();
   if (!name || !email || !password || !trimmedPhone) {
@@ -34,6 +34,9 @@ export async function POST(req: Request) {
     if (!availability || !Object.values(availability).some(Boolean)) {
       return NextResponse.json({ message: "請至少選擇一個可授課天數" }, { status: 400 });
     }
+    if (!photoUrl || typeof photoUrl !== "string") {
+      return NextResponse.json({ message: "請上傳老師照片" }, { status: 400 });
+    }
   }
 
   const existing = await prisma.user.findUnique({ where: { email } });
@@ -60,6 +63,7 @@ export async function POST(req: Request) {
         showPhone: !!showPhone,
         trialClass: !!trialClass,
         phone: trimmedPhone,
+        photoUrl,
       },
     });
   }

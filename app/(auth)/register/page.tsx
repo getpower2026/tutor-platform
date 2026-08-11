@@ -82,7 +82,30 @@ function RegisterForm() {
     setLoading(true);
     setError("");
 
-    // 1. 建立帳號
+    // 1. 老師必須先成功上傳照片，才能建立帳號；失敗重試最多 3 次以應付行動網路不穩定
+    let photoUrl: string | undefined;
+    if (data.role === "TEACHER" && photoFile) {
+      for (let attempt = 0; attempt < 3 && !photoUrl; attempt++) {
+        try {
+          const formData = new FormData();
+          formData.append("file", photoFile);
+          const upRes = await fetch("/api/upload", { method: "POST", body: formData });
+          if (upRes.ok) {
+            const { url } = await upRes.json();
+            photoUrl = url;
+          }
+        } catch {
+          // 重試
+        }
+      }
+      if (!photoUrl) {
+        setError("照片上傳失敗（可能是網路不穩定），請重新選擇照片或稍後再試一次");
+        setLoading(false);
+        return;
+      }
+    }
+
+    // 2. 建立帳號
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -92,6 +115,7 @@ function RegisterForm() {
         availability,
         showPhone,
         trialClass,
+        photoUrl,
       }),
     });
     if (!res.ok) {
@@ -100,40 +124,13 @@ function RegisterForm() {
       setLoading(false);
       return;
     }
-    const { id: userId } = await res.json();
 
-    // 2. 登入
+    // 3. 登入
     const signInRes = await signIn("credentials", { email: data.email, password: data.password, redirect: false });
     if (signInRes?.error) {
       setError("帳號建立成功，但自動登入失敗，請手動登入");
       setLoading(false);
       return;
-    }
-
-    // 3. 上傳照片（老師），失敗時重試最多 3 次以應付行動網路不穩定
-    if (data.role === "TEACHER" && photoFile) {
-      let photoOk = false;
-      for (let attempt = 0; attempt < 3 && !photoOk; attempt++) {
-        try {
-          const formData = new FormData();
-          formData.append("file", photoFile);
-          const upRes = await fetch("/api/upload", { method: "POST", body: formData });
-          if (upRes.ok) {
-            const { url } = await upRes.json();
-            const patchRes = await fetch(`/api/teachers/${userId}`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ photoUrl: url }),
-            });
-            photoOk = patchRes.ok;
-          }
-        } catch {
-          photoOk = false;
-        }
-      }
-      if (!photoOk) {
-        alert("帳號已建立成功，但照片上傳失敗（可能是網路不穩定）。請登入後至「編輯個人檔案」重新上傳照片，家長才看得到您的頭像。");
-      }
     }
 
     router.push(data.role === "TEACHER" ? "/dashboard" : "/teachers");
